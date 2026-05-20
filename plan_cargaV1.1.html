@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan de Carga — San Miguel</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --v1:#0d2b0d;--v2:#1a4a1a;--v3:#2d7a2d;--v4:#4aaa4a;--vneon:#7ddf7d;
+  --n1:#7a3000;--n2:#b34a00;--n3:#e8812a;--n4:#f5a455;
+  --r2:#c03030;--r3:#e85555;
+  --bg:#080f08;--bg2:#0e1a0e;--bg3:#141f14;--bg4:#1a271a;
+  --borde:#1e2e1e;--borde2:#253525;
+  --t1:#ddeedd;--t2:#8aaa8a;--t3:#4a6a4a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;font-size:14px;}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#050d05 0%,var(--v2) 100%);border-bottom:2px solid var(--n3);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.hdr-left{display:flex;align-items:center;gap:12px;}
+.hdr-ico{width:40px;height:40px;background:var(--n3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.hdr-titulo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:3px;color:#fff;line-height:1;text-transform:uppercase;}
+.hdr-sub{font-size:10px;color:var(--n4);letter-spacing:1.5px;text-transform:uppercase;}
+.jornada-chip{background:rgba(232,129,42,.12);border:1px solid var(--n3);border-radius:8px;padding:6px 14px;text-align:right;}
+.jornada-chip .lbl{font-size:9px;color:var(--n4);letter-spacing:1px;text-transform:uppercase;}
+.jornada-chip .val{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--n3);letter-spacing:1px;}
+
+/* TABS */
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--borde2);}
+.tab{flex:1;padding:11px 6px;text-align:center;font-size:11px;font-weight:600;color:var(--t3);cursor:pointer;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid transparent;transition:all .2s;}
+.tab.on{color:var(--n3);border-bottom-color:var(--n3);background:rgba(232,129,42,.05);}
+
+/* VIEWS */
+.view{display:none;padding:14px;}
+.view.on{display:block;}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--borde2);border-radius:12px;padding:14px;margin-bottom:12px;}
+.ctitle{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;color:var(--n3);margin-bottom:12px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+
+/* INDUSTRIA */
+.ind-panel{background:var(--bg3);border:1px solid var(--v3);border-radius:10px;padding:12px;margin-bottom:12px;}
+.ind-row{display:flex;align-items:center;gap:8px;justify-content:space-between;}
+.ind-stat{text-align:center;flex:1;}
+.ind-num{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:800;color:var(--vneon);line-height:1;}
+.ind-num.alerta{color:var(--n3);}
+.ind-num.critico{color:var(--r3);}
+.ind-lbl{font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+.ind-sep{width:1px;height:48px;background:var(--borde2);}
+.ind-ctrl{display:flex;align-items:center;gap:8px;background:var(--bg4);border:1px solid var(--borde2);border-radius:8px;padding:8px 12px;margin-top:10px;flex-wrap:wrap;}
+.ind-ctrl label{font-size:11px;color:var(--t2);min-width:120px;}
+.ind-ctrl input[type=number]{width:68px;background:var(--bg);border:1px solid var(--v3);border-radius:6px;padding:6px 8px;color:var(--vneon);font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;outline:none;}
+.ind-ctrl textarea{flex:2;min-width:150px;background:var(--bg);border:1px solid var(--borde2);border-radius:6px;padding:6px 8px;color:var(--t1);font-family:'Barlow',sans-serif;font-size:12px;resize:none;height:36px;outline:none;}
+.btn-sm{padding:7px 14px;border-radius:6px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-sm.verde{background:var(--v3);color:#fff;}
+.btn-sm.verde:hover{background:var(--v4);}
+
+/* PRESETS */
+.presets{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.preset{padding:7px 14px;border-radius:8px;border:1px solid var(--borde2);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+.preset:hover{border-color:var(--v4);color:var(--vneon);}
+.preset.on{background:var(--v2);border-color:var(--v3);color:#fff;}
+
+/* HORA */
+.hora-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.hora-blk{background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:10px 12px;}
+.hora-blk label{display:block;font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
+.hora-blk input[type=time]{width:100%;background:var(--bg4);border:1px solid var(--borde2);border-radius:6px;padding:7px 10px;color:var(--t1);font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;outline:none;}
+
+/* DESTINOS */
+.dest-header{display:grid;grid-template-columns:1fr 72px 82px 82px;gap:4px;padding:7px 10px;background:var(--v2);border-radius:8px 8px 0 0;margin-bottom:1px;}
+.dest-header span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.7);text-align:center;}
+.dest-header span:first-child{text-align:left;}
+.dest-row{display:grid;grid-template-columns:1fr 72px 82px 82px;gap:4px;padding:7px 10px;background:var(--bg3);border:1px solid var(--borde);border-top:none;align-items:center;transition:background .2s;}
+.dest-row:last-child{border-radius:0 0 8px 8px;}
+.dest-row:hover{background:var(--bg4);}
+.dest-row.activo{background:rgba(45,122,45,.08);border-left:3px solid var(--v3);}
+.dest-nombre{font-size:12px;font-weight:500;color:var(--t1);line-height:1.3;}
+.dest-input{background:var(--bg4);border:1px solid var(--borde2);border-radius:6px;padding:5px 4px;color:var(--t1);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-align:center;width:100%;outline:none;transition:border-color .2s;}
+.dest-input:focus{border-color:var(--v4);}
+.dest-input.v{border-color:var(--v2);color:var(--vneon);}
+.time-inp{background:var(--bg4);border:1px solid var(--borde2);border-radius:6px;padding:5px 3px;color:var(--t1);font-size:12px;width:100%;outline:none;transition:border-color .2s;}
+.time-inp:focus{border-color:var(--v4);}
+.time-inp.v{border-color:var(--v2);color:var(--vneon);}
+.sec-div{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--t3);padding:10px 10px 4px;border-top:1px solid var(--borde2);margin-top:6px;text-transform:uppercase;}
+
+/* RESUMEN */
+.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.res-box{background:var(--bg3);border:1px solid var(--borde2);border-radius:10px;padding:12px 8px;text-align:center;}
+.res-num{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--n3);line-height:1;}
+.res-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
+/* BUTTONS */
+.btn{width:100%;padding:12px;border-radius:10px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;}
+.btn:active{transform:scale(.97);}
+.btn.verde{background:var(--v3);color:#fff;}
+.btn.verde:hover{background:var(--v4);}
+.btn.naranja{background:var(--n3);color:#fff;}
+.btn.naranja:hover{background:var(--n4);}
+.btn.outline{background:transparent;color:var(--t2);border:1px solid var(--borde2);font-size:13px;padding:9px;}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.fg{margin-bottom:10px;}
+.fg label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--t2);margin-bottom:5px;}
+.fg select,.fg textarea{width:100%;background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:9px 12px;color:var(--t1);font-family:'Barlow',sans-serif;font-size:14px;outline:none;appearance:none;transition:border-color .2s;}
+.fg select:focus,.fg textarea:focus{border-color:var(--v4);}
+.fg textarea{resize:none;height:64px;font-size:13px;}
+.req{color:var(--n3);}
+
+/* ESTADO PLAN */
+.ep-item{background:var(--bg3);border:1px solid var(--borde2);border-radius:10px;padding:11px 14px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;}
+.ep-item.ok{border-left:3px solid var(--v4);}
+.ep-item.parcial{border-left:3px solid var(--n3);}
+.ep-item.sin{border-left:3px solid var(--borde2);}
+.ep-nombre{font-size:13px;font-weight:500;}
+.ep-horario{font-size:10px;color:var(--t2);}
+.ep-prog{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;}
+.ep-prog.ok{color:var(--vneon);}
+.ep-prog.parcial{color:var(--n3);}
+.ep-prog.sin{color:var(--t3);}
+.ep-pct{font-size:10px;color:var(--t2);text-align:right;}
+
+/* DESPACHO ITEMS */
+.di{background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:10px 12px;margin-bottom:7px;}
+.di-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+.di-int{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;}
+.di-hora{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--vneon);}
+.di-dest{font-size:11px;color:var(--t2);}
+.di-obs{font-size:11px;color:var(--n4);font-style:italic;margin-top:5px;background:rgba(232,129,42,.07);border-radius:4px;padding:4px 8px;}
+
+/* NOVEDADES */
+.nov-item{background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:10px 12px;margin-bottom:7px;border-left:3px solid var(--borde2);}
+.nov-item.campo{border-left-color:var(--n3);}
+.nov-item.transporte{border-left-color:var(--r3);}
+.nov-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.nov-tipo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.nov-tipo.campo{color:var(--n3);}
+.nov-tipo.transporte{color:var(--r3);}
+.nov-hora{font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--t2);}
+.nov-dest{font-size:12px;font-weight:500;color:var(--t1);}
+.nov-desc{font-size:11px;color:var(--t2);margin-top:3px;}
+.nov-res-btn{font-size:10px;color:var(--v4);cursor:pointer;text-decoration:underline;margin-top:4px;display:inline-block;}
+
+/* IND LOG */
+.il-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;margin-bottom:6px;font-size:12px;}
+.il-hora{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--t2);min-width:110px;}
+.il-tn{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;min-width:60px;}
+.il-tn.ok{color:var(--vneon);}
+.il-tn.alerta{color:var(--n3);}
+.il-tn.critico{color:var(--r3);}
+.il-mot{color:var(--t2);flex:1;}
+
+/* CIERRE */
+.ci-item{background:var(--bg3);border:1px solid var(--borde2);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+.ci-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.ci-nombre{font-size:13px;font-weight:600;}
+.badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;}
+.badge.ok{background:rgba(74,170,74,.2);color:var(--vneon);}
+.badge.parcial{background:rgba(232,129,42,.2);color:var(--n4);}
+.badge.mal{background:rgba(232,85,85,.2);color:#f08080;}
+.ci-stats{display:flex;gap:14px;font-size:11px;color:var(--t2);margin-bottom:6px;}
+.ci-sv{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;}
+.ci-sv.ok{color:var(--vneon);}
+.ci-sv.alerta{color:var(--n3);}
+.ci-sv.mal{color:var(--r3);}
+.ci-nov{font-size:11px;color:var(--n4);font-style:italic;background:rgba(232,129,42,.07);border-radius:4px;padding:5px 8px;margin-top:5px;}
+.ci-nov.transporte{color:#f08080;background:rgba(232,85,85,.07);}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--v3);color:#fff;padding:11px 22px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;transition:transform .3s;white-space:nowrap;}
+.toast.on{transform:translateX(-50%) translateY(0);}
+.toast.err{background:var(--r2);}
+.toast.warn{background:var(--n2);}
+
+.empty{text-align:center;padding:28px 16px;color:var(--t3);font-size:13px;}
+.empty .ic{font-size:32px;margin-bottom:8px;}
+.subtitulo{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--t3);text-transform:uppercase;padding:8px 0 6px;margin-top:4px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-ico">🍋</div>
+    <div>
+      <div class="hdr-titulo">Plan de Carga</div>
+      <div class="hdr-sub">San Miguel Citrus</div>
+    </div>
+  </div>
+  <div class="jornada-chip" style="cursor:pointer" onclick="editarFecha()">
+    <div class="lbl">Jornada ✏️</div>
+    <div class="val" id="jornadaVal">—</div>
+    <input type="date" id="jornadaInput" style="display:none;background:transparent;border:none;color:var(--n3);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;outline:none;width:120px;" onchange="cambiarFecha(this.value)" onblur="ocultarFecha()">
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab on" onclick="goTab('plan')">📋 Plan</div>
+  <div class="tab" onclick="goTab('despacho')">🚛 Despacho</div>
+  <div class="tab" onclick="goTab('cierre')">📊 Cierre</div>
+</div>
+
+<!-- ══ PLAN ══ -->
+<div class="view on" id="view-plan">
+
+  <div class="ind-panel">
+    <div class="ind-row">
+      <div class="ind-stat">
+        <div class="ind-num" id="tnActual">87</div>
+        <div class="ind-lbl">TN/hora</div>
+      </div>
+      <div class="ind-sep"></div>
+      <div class="ind-stat">
+        <div class="ind-num alerta" id="camDisp">—</div>
+        <div class="ind-lbl">Camiones jornada</div>
+      </div>
+      <div class="ind-sep"></div>
+      <div class="ind-stat">
+        <div class="ind-num" id="hsDisp">—</div>
+        <div class="ind-lbl">Horas disponibles</div>
+      </div>
+    </div>
+    <div class="ind-ctrl">
+      <label>Capacidad Industria</label>
+      <input type="number" id="tnInput" value="87" min="1" max="87">
+      <textarea id="tnMotivo" placeholder="Motivo del cambio..."></textarea>
+      <button class="btn-sm verde" onclick="cambiarIndustria()">Aplicar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">⏰ Horario de jornada</div>
+    <div class="presets">
+      <button class="preset" id="p24" onclick="setPreset('24')">⚡ 24hs (06→06)</button>
+      <button class="preset on" id="p20" onclick="setPreset('20')">🕙 20hs (10→06)</button>
+      <button class="preset" id="pcustom" onclick="setPreset('custom')">✏️ Personalizado</button>
+    </div>
+    <div class="hora-row">
+      <div class="hora-blk">
+        <label>Inicio Industria</label>
+        <input type="time" id="hInicio" value="10:00" onchange="calcular()">
+      </div>
+      <div class="hora-blk">
+        <label>Fin jornada</label>
+        <input type="time" id="hFin" value="06:00" onchange="calcular()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">📍 Asignación de destinos</div>
+    <div class="dest-header">
+      <span>Destino</span><span>Camiones</span><span>Desde</span><span>Hasta</span>
+    </div>
+    <div class="sec-div">🏭 Empaques de Terceros</div>
+    <div id="dEmpaques"></div>
+    <div class="sec-div">🌿 Fincas de Terceros</div>
+    <div id="dFincas3"></div>
+    <div class="sec-div">🍋 Fincas San Miguel</div>
+    <div id="dFincasSM"></div>
+  </div>
+
+  <div class="res-grid">
+    <div class="res-box"><div class="res-num" id="rAsignados">0</div><div class="res-lbl">Asignados</div></div>
+    <div class="res-box"><div class="res-num" id="rDisponibles">—</div><div class="res-lbl">Disponibles</div></div>
+    <div class="res-box"><div class="res-num" id="rDestinos">0</div><div class="res-lbl">Destinos activos</div></div>
+  </div>
+
+  <button class="btn naranja" onclick="confirmarPlan()">✅ Confirmar Plan</button>
+  <button class="btn verde" onclick="generarPDFPlan()">📄 PDF del Plan</button>
+  <button class="btn outline" onclick="limpiarPlan()">🔄 Limpiar plan</button>
+
+</div>
+
+<!-- ══ DESPACHO ══ -->
+<div class="view" id="view-despacho">
+
+  <div class="card">
+    <div class="ctitle">🚛 Registrar despacho</div>
+    <div class="form-row">
+      <div class="fg">
+        <label>Nº Interno <span class="req">*</span></label>
+        <select id="dInterno"><option value="">— Interno —</option></select>
+      </div>
+      <div class="fg">
+        <label>Destino <span class="req">*</span></label>
+        <select id="dDestino"><option value="">— Destino —</option></select>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Observación (opcional)</label>
+      <textarea id="dObs" placeholder="Ej: redireccionado por gerencia, demora en planta..."></textarea>
+    </div>
+    <button class="btn verde" onclick="registrarDespacho()">🚛 Registrar despacho</button>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">⚠️ Registrar novedad</div>
+    <div class="form-row">
+      <div class="fg">
+        <label>Responsable <span class="req">*</span></label>
+        <select id="novTipo">
+          <option value="">— Tipo —</option>
+          <option value="campo">🌿 Campo / Destino</option>
+          <option value="transporte">🚛 Transporte Interno</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Destino afectado <span class="req">*</span></label>
+        <select id="novDestino"><option value="">— Destino —</option></select>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Descripción <span class="req">*</span></label>
+      <textarea id="novDesc" placeholder="Ej: máquina rota sin arreglo hasta fin de jornada, camión averiado..."></textarea>
+    </div>
+    <button class="btn naranja" onclick="registrarNovedad()">⚠️ Registrar novedad</button>
+  </div>
+
+  <div class="subtitulo">Estado del plan</div>
+  <div id="estadoPlan"></div>
+
+  <div style="display:flex;gap:8px;margin-bottom:4px;align-items:center;">
+    <div class="subtitulo" style="flex:1;margin:0;padding:8px 0 4px;">Despachos del día</div>
+    <button class="btn-sm verde" onclick="generarPDFDespachos()" style="font-size:11px;padding:5px 10px;">📄 PDF</button>
+    <button class="btn-sm" style="background:var(--r2);color:#fff;font-size:11px;padding:5px 10px;" onclick="limpiarDespachos()">🗑️ Limpiar</button>
+  </div>
+  <div id="histDespachos"></div>
+
+  <div class="subtitulo">Novedades activas</div>
+  <div id="listNovedades"></div>
+
+</div>
+
+<!-- ══ CIERRE ══ -->
+<div class="view" id="view-cierre">
+
+  <div class="res-grid">
+    <div class="res-box"><div class="res-num" id="cPlan">—</div><div class="res-lbl">Planificados</div></div>
+    <div class="res-box"><div class="res-num" id="cEjec">—</div><div class="res-lbl">Ejecutados</div></div>
+    <div class="res-box"><div class="res-num" id="cPct">—</div><div class="res-lbl">Cumplimiento</div></div>
+  </div>
+
+  <div id="cierreDetalle"></div>
+
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;flex-wrap:wrap;">
+    <div class="subtitulo" style="flex:1;margin:0;padding:8px 0 4px;">🏭 Resumen Industria — jornada</div>
+    <button class="btn-sm" style="background:var(--r2);color:#fff;font-size:11px;padding:5px 10px;" onclick="limpiarIndustria()">🗑️ Limpiar</button>
+  </div>
+  <div id="cierreIndustriaResumen"></div>
+  <div class="subtitulo" style="margin-top:8px;">Detalle de cambios</div>
+  <div id="cierreIndustria"></div>
+
+  <button class="btn verde" onclick="cerrarJornada()" style="margin-top:8px;" id="btnCerrar">🔒 Cerrar jornada</button>
+  <button class="btn naranja" onclick="generarPDFCierre()">📄 PDF del Cierre</button>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const INTERNOS=[10,11,12,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100];
+const DESTINOS={
+  empaques:["PK AGROPECUARIA EL SAUCE","PK AGRO ALIANZA","PK ROTTA LEDESMA","VICENTE TRAPANI - FRUTEX","FGF TRAPANI","PK ACEQUIONES UNIFRUTTI","PK SIGSTAD","PK LAPACHO AMARILLO","PK SAGITARIO","PK LA PATRIA"],
+  fincas3:["FINCA NOUGUES LULES","FINCA MARIA LUISA","FINCA MONTE BELLO","FINCA LA ROSA EL TIMBO","FINCA PUERTA NEGRA EL CADILLAL","FINCA LA ROSA SAUCE HUACHO","FINCA SALOMON CASPINCHANGO","LAS MARIAS NYNAGRO"],
+  fincasSM:["MONTEGRANDE SM","CASPINCHANGO SM","LUZ MARIA SM","LULES SM","LAS SALINAS SM","SOFIA SM"]
+};
+const TODOS=[...DESTINOS.empaques,...DESTINOS.fincas3,...DESTINOS.fincasSM];
+const TN_CAM=38;
+const SHEETS='https://script.google.com/macros/s/AKfycbxFsAzcjO9UyOxa5HRZQQ141fDCKxfc62dkL-O4FU0SRSV4-fdZPe1OxZbnsUiPUALh/exec';
+
+
+
+// ── ESTADO ──
+function hoy(){return new Date().toLocaleDateString('es-AR');}
+function horaAhora(){return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Argentina/Buenos_Aires'});}
+function slug(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
+
+function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[]};}
+
+let E=(()=>{
+  try{
+    const raw=localStorage.getItem('sm_plan_v3');
+    if(!raw) return estadoBase();
+    const e=JSON.parse(raw);
+    if(e.fecha!==hoy()) return estadoBase();
+    return e;
+  }catch(x){return estadoBase();}
+})();
+
+function save(){localStorage.setItem('sm_plan_v3',JSON.stringify(E));}
+
+// ── FECHA MANUAL ──
+function editarFecha(){
+  const inp=document.getElementById('jornadaInput');
+  const val=document.getElementById('jornadaVal');
+  // Convertir fecha actual a formato yyyy-mm-dd para el input
+  const parts=E.fecha.split('/');
+  if(parts.length===3) inp.value=`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+  val.style.display='none';
+  inp.style.display='block';
+  inp.focus();
+}
+
+function cambiarFecha(val){
+  if(!val) return;
+  const [y,m,d]=val.split('-');
+  E.fecha=`${d}/${m}/${y}`;
+  save();
+  actualizarJornadaDisplay();
+  ocultarFecha();
+  toast(`Jornada: ${E.fecha}`);
+}
+
+function ocultarFecha(){
+  document.getElementById('jornadaInput').style.display='none';
+  document.getElementById('jornadaVal').style.display='block';
+}
+
+function actualizarJornadaDisplay(){
+  const parts=E.fecha.split('/');
+  if(parts.length===3){
+    const d=new Date(`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}T12:00:00`);
+    const dias=['DOM','LUN','MAR','MIE','JUE','VIE','SAB'];
+    document.getElementById('jornadaVal').textContent=`${dias[d.getDay()]} ${parts[0]}/${parts[1]} → 06:00`;
+  }
+}
+
+// ── LIMPIAR DESPACHOS ──
+function limpiarDespachos(){
+  if(E.despachos.length===0){toast('No hay despachos para limpiar','warn');return;}
+  if(!confirm(`¿Limpiar todos los despachos (${E.despachos.length})?`)) return;
+  E.despachos=[];save();
+  poblarSelectores();renderEstadoPlan();renderHistDespachos();renderCierre();
+  toast('Despachos limpiados');
+}
+
+// ── LIMPIAR INDUSTRIA ──
+function limpiarIndustria(){
+  if(E.indLog.length===0){toast('No hay registro de Industria','warn');return;}
+  if(!confirm('¿Limpiar todo el registro de Industria?')) return;
+  E.indLog=[];save();
+  renderIndLog();renderCierre();
+  toast('Registro de Industria limpiado');
+}
+
+// ── PDF DESPACHOS ──
+function generarPDFDespachos(){
+  if(E.despachos.length===0){toast('No hay despachos para exportar','err');return;}
+  const filas=E.despachos.map((d,i)=>`<tr>
+    <td style="text-align:center;color:#666">${i+1}</td>
+    <td style="font-weight:700;font-size:15px;color:#1a4a1a">${d.interno}</td>
+    <td>${d.destino}</td>
+    <td style="text-align:center;font-weight:700;color:#2d7a2d">${d.hora}</td>
+    <td style="font-size:11px;color:#666;font-style:italic">${d.obs||'—'}</td>
+  </tr>`).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body{font-family:Arial,sans-serif;padding:30px;color:#1a1a1a;max-width:800px;margin:0 auto;}
+    .hdr{background:#1a4a1a;color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+    .hdr h1{font-size:26px;letter-spacing:3px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;letter-spacing:1px;margin-top:4px;}
+    .stat{display:inline-block;background:#f5f5f5;border-radius:8px;padding:10px 20px;text-align:center;border:1px solid #e0e0e0;margin-bottom:20px;margin-right:10px;}
+    .stat .num{font-size:28px;font-weight:800;color:#e8812a;}.stat .lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.8px;}
+    table{width:100%;border-collapse:collapse;}
+    th{background:#1a4a1a;color:#fff;padding:10px 12px;text-align:left;font-size:12px;letter-spacing:1px;text-transform:uppercase;}
+    td{padding:9px 12px;border-bottom:1px solid #eee;font-size:13px;}
+    tr:nth-child(even)td{background:#fafafa;}
+    .footer{margin-top:24px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}
+  </style></head><body>
+  <div class="hdr">
+    <div><h1>DESPACHOS DEL DÍA</h1><div class="sub">SAN MIGUEL CITRUS — TRANSPORTE INTERNO</div></div>
+    <div style="text-align:right;font-size:13px;opacity:.8">Jornada: ${E.fecha}<br>Total: ${E.despachos.length} despachos</div>
+  </div>
+  <div>
+    <div class="stat"><div class="num">${E.despachos.length}</div><div class="lbl">Total despachos</div></div>
+    <div class="stat"><div class="num">${[...new Set(E.despachos.map(d=>d.destino))].length}</div><div class="lbl">Destinos cubiertos</div></div>
+  </div>
+  <table><thead><tr><th>#</th><th>Interno</th><th>Destino</th><th>Hora</th><th>Observación</th></tr></thead>
+  <tbody>${filas}</tbody></table>
+  <div class="footer">Documento generado el ${new Date().toLocaleString('es-AR')} — San Miguel Citrus</div>
+  </body></html>`;
+  abrirPDF(html);
+}
+
+// ── CERRAR JORNADA ──
+function cerrarJornada(){
+  if(E.indCierre){toast('La jornada ya fue cerrada a las '+E.indCierre,'warn');return;}
+  const hora=horaAhora();
+  if(E.indLog.length>0) E.indLog[E.indLog.length-1].horaFin=hora;
+  E.indCierre=hora;
+  save();renderIndLog();renderCierre();
+  document.getElementById('btnCerrar').textContent='✅ Jornada cerrada a las '+hora;
+  document.getElementById('btnCerrar').disabled=true;
+  toast('Jornada cerrada a las '+hora);
+}
+
+// ── INIT ──
+function init(){
+  actualizarJornadaDisplay();
+  renderDestinos('dEmpaques',DESTINOS.empaques);
+  renderDestinos('dFincas3',DESTINOS.fincas3);
+  renderDestinos('dFincasSM',DESTINOS.fincasSM);
+  document.getElementById('tnInput').value=E.tn;
+  document.getElementById('hInicio').value=E.hInicio;
+  document.getElementById('hFin').value=E.hFin;
+  restaurarPlan();
+  calcular();
+  poblarSelectores();
+  renderEstadoPlan();
+  renderHistDespachos();
+  renderNovedades();
+  renderCierre();
+
+
+}
+
+// ── DESTINOS ──
+function renderDestinos(cid,lista){
+  document.getElementById(cid).innerHTML=lista.map(n=>{
+    const p=E.plan[n]||{};
+    return `<div class="dest-row ${p.camiones>0?'activo':''}" id="dr-${slug(n)}">
+      <div class="dest-nombre">${n}</div>
+      <input type="number" class="dest-input ${p.camiones>0?'v':''}" id="dc-${slug(n)}" value="${p.camiones||''}" min="0" max="60" placeholder="0" oninput="onDest('${n}')">
+      <input type="time" class="time-inp ${p.desde?'v':''}" id="dd-${slug(n)}" value="${p.desde||''}" onchange="onDest('${n}')">
+      <input type="time" class="time-inp ${p.hasta?'v':''}" id="dh-${slug(n)}" value="${p.hasta||''}" onchange="onDest('${n}')">
+    </div>`;
+  }).join('');
+}
+
+function onDest(n){
+  const cam=parseInt(document.getElementById(`dc-${slug(n)}`).value)||0;
+  const desde=document.getElementById(`dd-${slug(n)}`).value;
+  const hasta=document.getElementById(`dh-${slug(n)}`).value;
+  if(cam>0){
+    E.plan[n]={camiones:cam,desde,hasta};
+    document.getElementById(`dc-${slug(n)}`).classList.add('v');
+    document.getElementById(`dr-${slug(n)}`).classList.add('activo');
+  }else{
+    delete E.plan[n];
+    document.getElementById(`dc-${slug(n)}`).classList.remove('v');
+    document.getElementById(`dr-${slug(n)}`).classList.remove('activo');
+  }
+  if(desde) document.getElementById(`dd-${slug(n)}`).classList.add('v');
+  if(hasta) document.getElementById(`dh-${slug(n)}`).classList.add('v');
+  actualizarResumen();save();
+}
+
+function restaurarPlan(){
+  Object.keys(E.plan).forEach(n=>{
+    const p=E.plan[n];
+    const dc=document.getElementById(`dc-${slug(n)}`);
+    const dd=document.getElementById(`dd-${slug(n)}`);
+    const dh=document.getElementById(`dh-${slug(n)}`);
+    const dr=document.getElementById(`dr-${slug(n)}`);
+    if(dc){dc.value=p.camiones;dc.classList.add('v');}
+    if(dd&&p.desde){dd.value=p.desde;dd.classList.add('v');}
+    if(dh&&p.hasta){dh.value=p.hasta;dh.classList.add('v');}
+    if(dr) dr.classList.add('activo');
+  });
+}
+
+// ── CÁLCULOS ──
+function calcHoras(ini,fin){
+  const[hi,mi]=ini.split(':').map(Number);
+  const[hf,mf]=fin.split(':').map(Number);
+  let i=hi*60+mi,f=hf*60+mf;
+  if(f<=i) f+=1440;
+  return Math.round((f-i)/60*10)/10;
+}
+
+function calcular(){
+  const tn=parseInt(document.getElementById('tnInput').value)||87;
+  const ini=document.getElementById('hInicio').value;
+  const fin=document.getElementById('hFin').value;
+  E.hInicio=ini;E.hFin=fin;
+  const hs=calcHoras(ini,fin);
+  const cam=Math.floor(hs*tn/TN_CAM);
+  document.getElementById('tnActual').textContent=E.tn;
+  document.getElementById('hsDisp').textContent=`${hs}h`;
+  document.getElementById('camDisp').textContent=cam;
+  document.getElementById('rDisponibles').textContent=cam;
+  actualizarResumen();save();
+}
+
+function actualizarResumen(){
+  const total=Object.values(E.plan).reduce((a,v)=>a+(v.camiones||0),0);
+  const dest=Object.keys(E.plan).length;
+  document.getElementById('rAsignados').textContent=total;
+  document.getElementById('rDestinos').textContent=dest;
+}
+
+function setPreset(tipo){
+  document.querySelectorAll('.preset').forEach(b=>b.classList.remove('on'));
+  if(tipo==='24'){document.getElementById('p24').classList.add('on');document.getElementById('hInicio').value='06:00';document.getElementById('hFin').value='06:00';toast('Jornada 24hs aplicada');}
+  else if(tipo==='20'){document.getElementById('p20').classList.add('on');document.getElementById('hInicio').value='10:00';document.getElementById('hFin').value='06:00';toast('Jornada 20hs aplicada');}
+  else{document.getElementById('pcustom').classList.add('on');toast('Ingresá el horario manualmente');}
+  calcular();
+}
+
+// ── INDUSTRIA ──
+function cambiarIndustria(){
+  const tn=parseInt(document.getElementById('tnInput').value)||87;
+  const motivo=document.getElementById('tnMotivo').value.trim();
+  if(tn!==E.tn&&!motivo){toast('Agregá el motivo del cambio','err');return;}
+  const hora=horaAhora();
+  if(E.indLog.length>0) E.indLog[E.indLog.length-1].horaFin=hora;
+  E.indLog.push({horaInicio:hora,horaFin:'—',tn,motivo:motivo||'Inicio jornada'});
+  E.tn=tn;
+  calcular();renderIndLog();renderCierre();
+  document.getElementById('tnMotivo').value='';
+  toast(`Industria: ${tn} TN/hora`);
+}
+
+function renderIndLog(){
+  const c=document.getElementById('cierreIndustria');
+  const r=document.getElementById('cierreIndustriaResumen');
+  if(!c) return;
+
+  if(E.indLog.length===0){
+    if(r) r.innerHTML='<div class="empty"><div class="ic">🏭</div>Sin registros de Industria en esta jornada.</div>';
+    c.innerHTML='';
+    return;
+  }
+
+  // Promedio simple de todos los valores TN registrados
+  const valores=E.indLog.map(l=>l.tn);
+  const promTN=Math.round(valores.reduce((a,b)=>a+b,0)/valores.length);
+  const hs=calcHoras(E.hInicio, E.indCierre||horaAhora());
+  const camReales=Math.floor((hs*promTN)/38);
+  const camPlan=parseInt(document.getElementById('camDisp').textContent)||0;
+  const diff=camReales-camPlan;
+  const diffColor=diff>=0?'var(--vneon)':diff>=-3?'var(--n3)':'var(--r3)';
+  const sinVariaciones=E.indLog.length===1&&E.indLog[0].tn===87;
+
+  if(r){
+    if(sinVariaciones){
+      r.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--v2);border-radius:10px;padding:14px;text-align:center;margin-bottom:8px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;color:var(--vneon);">✅ Sin variaciones — Industria operó a 87 TN/hora toda la jornada</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:6px;">${camPlan} camiones disponibles según plan inicial</div>
+      </div>`;
+    } else {
+      r.innerHTML=`
+      <div style="background:var(--bg3);border:1px solid var(--v2);border-radius:10px;padding:14px;margin-bottom:8px;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div style="text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--n3);line-height:1">${promTN}</div>
+            <div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px">TN/hora promedio real</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--vneon);line-height:1">${camReales}</div>
+            <div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px">Camiones reales disponibles</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:${diffColor};line-height:1">${diff>0?'+':''}${diff}</div>
+            <div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px">Desvío vs plan inicial</div>
+          </div>
+        </div>
+        ${E.indCierre?`<div style="font-size:11px;color:var(--t2);text-align:center;margin-top:10px;">Jornada cerrada a las ${E.indCierre}</div>`:'<div style="font-size:11px;color:var(--n3);text-align:center;margin-top:10px;">⚠️ Jornada aún abierta — usá "Cerrar jornada" para fijar el cálculo final</div>'}
+      </div>`;
+    }
+  }
+
+  c.innerHTML=[...E.indLog].reverse().map(l=>`
+    <div class="il-item">
+      <div class="il-hora">${l.horaInicio} → ${l.horaFin}</div>
+      <div class="il-tn ${l.tn>=70?'ok':l.tn>=50?'alerta':'critico'}">${l.tn}TN</div>
+      <div class="il-mot">${l.motivo}</div>
+    </div>`).join('');
+}
+
+// ── CONFIRMAR ──
+function confirmarPlan(){
+  const total=Object.values(E.plan).reduce((a,v)=>a+(v.camiones||0),0);
+  if(total===0){toast('Asigná al menos un destino','err');return;}
+  E.planConfirmado=true;
+  if(E.indLog.length===0) E.indLog.push({horaInicio:horaAhora(),horaFin:'—',tn:E.tn,motivo:'Inicio jornada'});
+  save();poblarSelectores();renderEstadoPlan();renderCierre();
+  enviarPlanSheets();
+  toast('✅ Plan confirmado');
+  setTimeout(()=>goTab('despacho'),1200);
+}
+
+async function enviarPlanSheets(){
+  const hs=calcHoras(E.hInicio,E.hFin);
+  for(const d of Object.keys(E.plan)){
+    const p=E.plan[d];
+    await enviar('Plan',[E.fecha,hs+'hs',E.tn,d,p.camiones,p.desde||'',p.hasta||'']);
+  }
+}
+
+function limpiarPlan(){
+  if(!confirm('¿Limpiar todo el plan y reiniciar la jornada?')) return;
+  E.plan={};
+  E.planConfirmado=false;
+  E.despachos=[];
+  E.novedades=[];
+  E.indLog=[];
+  E.indCierre=null;
+  renderDestinos('dEmpaques',DESTINOS.empaques);
+  renderDestinos('dFincas3',DESTINOS.fincas3);
+  renderDestinos('dFincasSM',DESTINOS.fincasSM);
+  actualizarResumen();
+  renderEstadoPlan();
+  renderHistDespachos();
+  renderNovedades();
+  renderCierre();
+  const btn=document.getElementById('btnCerrar');
+  if(btn){btn.textContent='🔒 Cerrar jornada';btn.disabled=false;}
+  save();
+  toast('Jornada reiniciada');
+}
+
+// ── SELECTORES ──
+function poblarSelectores(){
+  const si=document.getElementById('dInterno');
+  si.innerHTML='<option value="">— Interno —</option>';
+  INTERNOS.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=`Interno ${n}`;si.appendChild(o);});
+
+  const sd=document.getElementById('dDestino');
+  sd.innerHTML='<option value="">— Destino —</option>';
+  TODOS.forEach(d=>{
+    const o=document.createElement('option');o.value=d;
+    const disp=despachados(d);const plan=E.plan[d];
+    o.textContent=d+(plan?` (${disp}/${plan.camiones})`:'');
+    sd.appendChild(o);
+  });
+
+  const sn=document.getElementById('novDestino');
+  sn.innerHTML='<option value="">— Destino —</option>';
+  TODOS.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;sn.appendChild(o);});
+}
+
+function despachados(dest){return E.despachos.filter(d=>d.destino===dest).length;}
+
+// ── DESPACHO ──
+async function registrarDespacho(){
+  const interno=document.getElementById('dInterno').value;
+  const destino=document.getElementById('dDestino').value;
+  const obs=document.getElementById('dObs').value.trim();
+  if(!interno||!destino){toast('Seleccioná interno y destino','err');return;}
+  const hora=horaAhora();
+  const d={interno,destino,hora,obs,fecha:E.fecha};
+  E.despachos.push(d);save();
+  document.getElementById('dInterno').value='';
+  document.getElementById('dDestino').value='';
+  document.getElementById('dObs').value='';
+  poblarSelectores();renderEstadoPlan();renderHistDespachos();renderCierre();
+  const ok=await enviar('Despachos',[d.fecha,d.hora,d.interno,d.destino,d.obs||'']);
+  toast(`🚛 Int.${interno} → ${destino.split(' ').slice(0,2).join(' ')} ${ok?'✓':'⚠️'}`);
+}
+
+async function enviar(hoja, fila, accion=null){
+  try{
+    const body = accion ? {hoja, accion} : {hoja, fila};
+    await fetch(SHEETS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    return true;
+  }catch(e){return false;}
+}
+
+function renderEstadoPlan(){
+  const c=document.getElementById('estadoPlan');
+  const dest=Object.keys(E.plan);
+
+  // Destinos fuera del plan — tienen despachos pero no están en el plan
+  const destFueraPlan = [...new Set(E.despachos.map(d=>d.destino))].filter(d=>!E.plan[d]);
+
+  if(dest.length===0 && destFueraPlan.length===0){
+    c.innerHTML='<div class="empty"><div class="ic">📋</div>Confirmá el plan primero.</div>';return;
+  }
+
+  // Destinos del plan
+  const htmlPlan = dest.map(d=>{
+    const p=E.plan[d],disp=despachados(d);
+    const pct=p.camiones>0?Math.round(disp/p.camiones*100):0;
+    const cls=disp>=p.camiones?'ok':disp>0?'parcial':'sin';
+    return `<div class="ep-item ${cls}">
+      <div><div class="ep-nombre">${d}</div><div class="ep-horario">${p.desde||'—'} → ${p.hasta||'—'}</div></div>
+      <div style="text-align:right"><div class="ep-prog ${cls}">${disp}/${p.camiones}</div><div class="ep-pct">${pct}%</div></div>
+    </div>`;
+  }).join('');
+
+  // Destinos fuera del plan
+  const htmlExtraordinarios = destFueraPlan.length > 0 ? `
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--n3);padding:10px 0 4px;text-transform:uppercase;">⚠️ Fuera del plan</div>
+    ${destFueraPlan.map(d=>{
+      const disp=despachados(d);
+      return `<div class="ep-item" style="border-left:3px solid var(--n3);background:rgba(232,129,42,0.06);">
+        <div><div class="ep-nombre">${d}</div><div class="ep-horario" style="color:var(--n3);">No estaba en el plan</div></div>
+        <div style="text-align:right"><div class="ep-prog" style="color:var(--n3);">${disp}/0</div><div class="ep-pct" style="color:var(--n3);">Extraordinario</div></div>
+      </div>`;
+    }).join('')}` : '';
+
+  c.innerHTML = htmlPlan + htmlExtraordinarios;
+}
+
+function renderHistDespachos(){
+  const c=document.getElementById('histDespachos');
+  if(E.despachos.length===0){c.innerHTML='<div class="empty"><div class="ic">🚛</div>Sin despachos aún.</div>';return;}
+  // Mostrar todos en orden inverso con índice real
+  c.innerHTML=E.despachos.map((d,i)=>`<div class="di" style="position:relative;">
+    <div class="di-h">
+      <div><div class="di-int">Interno ${d.interno}</div><div class="di-dest">${d.destino}</div></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="di-hora">${d.hora}</div>
+        <button onclick="eliminarDespacho(${i})" style="background:var(--r2);border:none;border-radius:6px;color:#fff;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">🗑️ Borrar</button>
+      </div>
+    </div>
+    ${d.obs?`<div class="di-obs">💬 ${d.obs}</div>`:''}
+  </div>`).reverse().join('');
+}
+
+async function eliminarDespacho(index){
+  const d = E.despachos[index];
+  if(!confirm(`¿Borrar despacho Interno ${d.interno} → ${d.destino.split(' ').slice(0,2).join(' ')}?`)) return;
+  E.despachos.splice(index, 1);
+  save();
+  // Limpiar y reenviar todos los despachos del día a Sheets
+  await enviar('Despachos', null, 'limpiar');
+  for(const dep of E.despachos){
+    await enviar('Despachos',[dep.fecha, dep.hora, dep.interno, dep.destino, dep.obs||'']);
+  }
+  poblarSelectores();
+  renderEstadoPlan();
+  renderHistDespachos();
+  renderCierre();
+  toast(`🗑️ Despacho eliminado`);
+}
+
+// ── NOVEDADES ──
+function registrarNovedad(){
+  const tipo=document.getElementById('novTipo').value;
+  const destino=document.getElementById('novDestino').value;
+  const desc=document.getElementById('novDesc').value.trim();
+  if(!tipo||!destino||!desc){toast('Completá todos los campos','err');return;}
+  E.novedades.push({tipo,destino,desc,hora:horaAhora(),resuelta:false});
+  save();
+  document.getElementById('novTipo').value='';
+  document.getElementById('novDestino').value='';
+  document.getElementById('novDesc').value='';
+  renderNovedades();renderCierre();
+  toast('⚠️ Novedad registrada');
+}
+
+function resolverNovedad(i){
+  E.novedades[i].resuelta=true;
+  save();renderNovedades();renderCierre();
+  toast('Novedad resuelta');
+}
+
+function renderNovedades(){
+  const c=document.getElementById('listNovedades');
+  const activas=E.novedades.filter(n=>!n.resuelta);
+  if(activas.length===0){c.innerHTML='<div class="empty"><div class="ic">✅</div>Sin novedades activas.</div>';return;}
+  c.innerHTML=E.novedades.map((n,i)=>n.resuelta?'':`<div class="nov-item ${n.tipo}">
+    <div class="nov-h"><span class="nov-tipo ${n.tipo}">${n.tipo==='campo'?'🌿 Campo':'🚛 Transporte'}</span><span class="nov-hora">${n.hora}</span></div>
+    <div class="nov-dest">${n.destino}</div>
+    <div class="nov-desc">${n.desc}</div>
+    <span class="nov-res-btn" onclick="resolverNovedad(${i})">✓ Marcar como resuelta</span>
+  </div>`).join('');
+}
+
+// ── CIERRE ──
+function renderCierre(){
+  const dest=Object.keys(E.plan);
+  const totalPlan=Object.values(E.plan).reduce((a,v)=>a+v.camiones,0);
+  const totalEjec=E.despachos.length;
+  const pct=totalPlan>0?Math.round(totalEjec/totalPlan*100):0;
+  document.getElementById('cPlan').textContent=totalPlan||'—';
+  document.getElementById('cEjec').textContent=totalEjec||'—';
+  document.getElementById('cPct').textContent=totalPlan>0?`${pct}%`:'—';
+
+  const c=document.getElementById('cierreDetalle');
+
+  // Destinos fuera del plan
+  const destFueraPlan=[...new Set(E.despachos.map(d=>d.destino))].filter(d=>!E.plan[d]);
+
+  if(dest.length===0 && destFueraPlan.length===0){c.innerHTML='<div class="empty"><div class="ic">📊</div>El cierre se genera al confirmar el plan.</div>';renderIndLog();return;}
+
+  c.innerHTML=dest.map(d=>{
+    const p=E.plan[d],disp=despachados(d),diff=disp-p.camiones;
+    const cls=disp>=p.camiones?'ok':disp>=p.camiones*.7?'parcial':'mal';
+    const label=disp>=p.camiones?'Completo':disp>0?'Parcial':'Sin ejecutar';
+    const novs=E.novedades.filter(n=>n.destino===d);
+    const novCampo=novs.filter(n=>n.tipo==='campo');
+    const novTransp=novs.filter(n=>n.tipo==='transporte');
+    let justif='';
+    if(disp<p.camiones){
+      if(novCampo.length>0) justif+=`<div class="ci-nov">🌿 Campo: ${novCampo.map(n=>n.desc).join(' / ')}</div>`;
+      if(novTransp.length>0) justif+=`<div class="ci-nov transporte">🚛 Transporte: ${novTransp.map(n=>n.desc).join(' / ')}</div>`;
+      if(novs.length===0) justif='<div class="ci-nov" style="color:var(--t3)">Sin justificación registrada</div>';
+    }
+    return `<div class="ci-item">
+      <div class="ci-h"><div class="ci-nombre">${d}</div><span class="badge ${cls}">${label}</span></div>
+      <div class="ci-stats">
+        <div><div class="ci-sv ${disp>=p.camiones?'ok':disp>0?'alerta':'mal'}">${disp}</div><div>Ejecutados</div></div>
+        <div><div class="ci-sv">${p.camiones}</div><div>Planificados</div></div>
+        <div><div class="ci-sv ${diff<0?'mal':diff>0?'alerta':'ok'}">${diff>0?'+':''}${diff}</div><div>Desvío</div></div>
+      </div>${justif}
+    </div>`;
+  }).join('');
+  // Agregar destinos extraordinarios al cierre
+  const htmlExtra = destFueraPlan.length > 0 ? destFueraPlan.map(d=>{
+    const disp=despachados(d);
+    const obsExtra=E.despachos.filter(x=>x.destino===d&&x.obs).map(x=>x.obs).join(' / ');
+    return `<div class="ci-item" style="border-left:3px solid var(--n3);">
+      <div class="ci-h">
+        <div class="ci-nombre">${d}</div>
+        <span class="badge" style="background:rgba(232,129,42,0.2);color:var(--n4);">⚠️ Fuera de plan</span>
+      </div>
+      <div class="ci-stats">
+        <div><div class="ci-sv" style="color:var(--n3);">${disp}</div><div>Despachados</div></div>
+        <div><div class="ci-sv">0</div><div>Planificados</div></div>
+        <div><div class="ci-sv" style="color:var(--n3);">+${disp}</div><div>Extraordinario</div></div>
+      </div>
+      ${obsExtra?`<div class="ci-nov">💬 ${obsExtra}</div>`:'<div class="ci-nov" style="color:var(--t3);">Sin observación registrada en despachos</div>'}
+    </div>`;
+  }).join('') : '';
+
+  if(htmlExtra) c.innerHTML += htmlExtra;
+
+  renderIndLog();
+}
+
+// ── PDFs ──
+function generarPDFPlan(){
+  const dest=Object.keys(E.plan);
+  if(dest.length===0){toast('No hay plan para exportar','err');return;}
+  const hs=calcHoras(E.hInicio,E.hFin);
+  const cam=Math.floor(hs*E.tn/TN_CAM);
+  const total=Object.values(E.plan).reduce((a,v)=>a+v.camiones,0);
+  const filas=dest.map(d=>{
+    const p=E.plan[d];
+    return `<tr><td>${d}</td><td style="text-align:center;font-weight:700;font-size:16px;color:#2d7a2d">${p.camiones}</td><td style="text-align:center">${p.desde||'—'}</td><td style="text-align:center">${p.hasta||'—'}</td></tr>`;
+  }).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body{font-family:Arial,sans-serif;padding:30px;color:#1a1a1a;max-width:800px;margin:0 auto;}
+    .hdr{background:#1a4a1a;color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+    .hdr h1{font-size:26px;letter-spacing:3px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;letter-spacing:1px;margin-top:4px;}.hdr .fecha{text-align:right;font-size:13px;opacity:.8;}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+    .stat{background:#f5f5f5;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0;}
+    .stat .num{font-size:28px;font-weight:800;color:#e8812a;}.stat .lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+    table{width:100%;border-collapse:collapse;}
+    th{background:#1a4a1a;color:#fff;padding:10px 12px;text-align:left;font-size:12px;letter-spacing:1px;text-transform:uppercase;}
+    td{padding:9px 12px;border-bottom:1px solid #eee;font-size:13px;}
+    tr:nth-child(even)td{background:#fafafa;}
+    .footer{margin-top:24px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}
+  </style></head><body>
+  <div class="hdr"><div><h1>PLAN DE CARGA</h1><div class="sub">SAN MIGUEL CITRUS — TRANSPORTE INTERNO</div></div>
+  <div class="fecha">Jornada: ${E.fecha}<br>Industria: ${E.tn} TN/hora<br>${E.hInicio} → 06:00 (${hs}hs)</div></div>
+  <div class="stats">
+    <div class="stat"><div class="num">${cam}</div><div class="lbl">Camiones disponibles</div></div>
+    <div class="stat"><div class="num">${total}</div><div class="lbl">Camiones asignados</div></div>
+    <div class="stat"><div class="num">${dest.length}</div><div class="lbl">Destinos activos</div></div>
+    <div class="stat"><div class="num">${Math.max(0,cam-total)}</div><div class="lbl">Sin asignar</div></div>
+  </div>
+  <table><thead><tr><th>Destino</th><th>Camiones</th><th>Desde</th><th>Hasta</th></tr></thead><tbody>${filas}</tbody></table>
+  <div class="footer">Documento generado el ${new Date().toLocaleString('es-AR')} — San Miguel Citrus</div>
+  </body></html>`;
+  abrirPDF(html);
+}
+
+function generarPDFCierre(){
+  const dest=Object.keys(E.plan);
+  if(dest.length===0){toast('No hay datos para el cierre','err');return;}
+  const totalPlan=Object.values(E.plan).reduce((a,v)=>a+v.camiones,0);
+  const totalEjec=E.despachos.length;
+  const pct=totalPlan>0?Math.round(totalEjec/totalPlan*100):0;
+  const filas=dest.map(d=>{
+    const p=E.plan[d],disp=despachados(d),diff=disp-p.camiones;
+    const pctD=p.camiones>0?Math.round(disp/p.camiones*100):0;
+    const color=disp>=p.camiones?'#2d7a2d':disp>0?'#e8812a':'#c03030';
+    const label=disp>=p.camiones?'✅ Completo':disp>0?'⚠️ Parcial':'❌ Sin ejecutar';
+    const novs=E.novedades.filter(n=>n.destino===d);
+    const justif=novs.length>0?novs.map(n=>`${n.tipo==='campo'?'🌿':'🚛'} ${n.desc}`).join(' / '):'—';
+    return `<tr><td>${d}</td><td style="text-align:center">${p.camiones}</td>
+      <td style="text-align:center;font-weight:700;color:${color}">${disp}</td>
+      <td style="text-align:center;font-weight:700;color:${diff<0?'#c03030':diff>0?'#e8812a':'#2d7a2d'}">${diff>0?'+':''}${diff}</td>
+      <td style="text-align:center;font-weight:700;color:${color}">${pctD}%</td>
+      <td style="font-size:11px">${label}</td>
+      <td style="font-size:11px;color:#666">${justif}</td></tr>`;
+  }).join('');
+  const indRows=E.indLog.map(l=>`<tr>
+    <td>${l.horaInicio}</td><td>${l.horaFin}</td>
+    <td style="font-weight:700;color:${l.tn>=70?'#2d7a2d':l.tn>=50?'#e8812a':'#c03030'}">${l.tn} TN/hora</td>
+    <td>${l.motivo}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body{font-family:Arial,sans-serif;padding:30px;color:#1a1a1a;max-width:900px;margin:0 auto;}
+    .hdr{background:#1a4a1a;color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+    .hdr h1{font-size:26px;letter-spacing:3px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;letter-spacing:1px;margin-top:4px;}
+    .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+    .kpi-box{border-radius:10px;padding:16px;text-align:center;border:1px solid #e0e0e0;}
+    .kpi-num{font-size:36px;font-weight:900;}.kpi-lbl{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.8px;margin-top:4px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+    th{background:#1a4a1a;color:#fff;padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.8px;text-transform:uppercase;}
+    td{padding:8px 10px;border-bottom:1px solid #eee;font-size:12px;}tr:nth-child(even)td{background:#fafafa;}
+    .sec{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1a4a1a;margin:20px 0 8px;padding-bottom:4px;border-bottom:2px solid #1a4a1a;}
+    .footer{margin-top:24px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}
+  </style></head><body>
+  <div class="hdr"><div><h1>CIERRE DE JORNADA</h1><div class="sub">SAN MIGUEL CITRUS — TRANSPORTE INTERNO</div></div>
+  <div style="text-align:right;font-size:13px;opacity:.8">Jornada: ${E.fecha}<br>Generado: ${horaAhora()}</div></div>
+  <div class="kpi">
+    <div class="kpi-box" style="background:#f0f8f0;border-color:#2d7a2d"><div class="kpi-num" style="color:#2d7a2d">${pct}%</div><div class="kpi-lbl">Cumplimiento general</div></div>
+    <div class="kpi-box" style="background:#f5f5f5"><div class="kpi-num" style="color:#e8812a">${totalEjec}</div><div class="kpi-lbl">Camiones ejecutados</div></div>
+    <div class="kpi-box" style="background:#f5f5f5"><div class="kpi-num" style="color:#1a4a1a">${totalPlan}</div><div class="kpi-lbl">Camiones planificados</div></div>
+  </div>
+  <div class="sec">Detalle por destino</div>
+  <table><thead><tr><th>Destino</th><th>Plan</th><th>Ejec.</th><th>Desvío</th><th>%</th><th>Estado</th><th>Justificación</th></tr></thead><tbody>${filas}</tbody></table>
+  ${(()=>{
+    if(E.indLog.length===0) return '';
+    const sinVar=E.indLog.length===1&&E.indLog[0].tn===87;
+    // Calcular horas usando los valores del formulario (formato HH:MM 24hs)
+    const _ini=E.hInicio||'10:00';
+    const _fin=E.hFin||'06:00';
+    const [_hi,_mi]=_ini.split(':').map(Number);
+    const [_hf,_mf]=_fin.split(':').map(Number);
+    let _i=_hi*60+_mi, _f=_hf*60+_mf;
+    if(_f<=_i) _f+=1440;
+    const hs=Math.round((_f-_i)/60*10)/10;
+    const valores=E.indLog.map(l=>l.tn);
+    const prom=Math.round(valores.reduce((a,b)=>a+b,0)/valores.length);
+    const cams=Math.floor((hs*prom)/38);
+    const indDetalle=E.indLog.map(l=>`<tr><td>${l.horaInicio}</td><td>${l.horaFin}</td><td style="color:#2d7a2d;font-weight:700">${l.tn} TN/hora</td><td>${l.motivo}</td></tr>`).join('');
+    if(sinVar) return `
+      <div class="sec">Industria — Resumen de jornada</div>
+      <div style="background:#f0f8f0;border-radius:8px;padding:14px;text-align:center;margin-bottom:16px;border:1px solid #2d7a2d">
+        <div style="font-size:16px;font-weight:700;color:#2d7a2d">✅ Sin variaciones — Industria operó a 87 TN/hora toda la jornada</div>
+        <div style="font-size:12px;color:#666;margin-top:4px">${cams} camiones disponibles según plan inicial</div>
+      </div>
+      <table><thead><tr><th>Inicio</th><th>Fin</th><th>Capacidad</th><th>Motivo</th></tr></thead><tbody>${indDetalle}</tbody></table>`;
+    return `
+      <div class="sec">Industria — Resumen de jornada</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+        <div style="background:#f5f5f5;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0">
+          <div style="font-size:26px;font-weight:900;color:#e8812a">${prom}</div>
+          <div style="font-size:10px;color:#666;text-transform:uppercase">TN/hora promedio real</div>
+        </div>
+        <div style="background:#f0f8f0;border-radius:8px;padding:12px;text-align:center;border:1px solid #2d7a2d">
+          <div style="font-size:26px;font-weight:900;color:#2d7a2d">${cams}</div>
+          <div style="font-size:10px;color:#666;text-transform:uppercase">Camiones reales disponibles</div>
+        </div>
+        <div style="background:#f5f5f5;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0">
+          <div style="font-size:26px;font-weight:900;color:#1a4a1a">${hs}h</div>
+          <div style="font-size:10px;color:#666;text-transform:uppercase">Horas operativas</div>
+        </div>
+      </div>
+      <table><thead><tr><th>Inicio</th><th>Fin</th><th>Capacidad</th><th>Motivo</th></tr></thead><tbody>${indDetalle}</tbody></table>`;
+  })()}
+  <div class="footer">Documento generado el ${new Date().toLocaleString('es-AR')} — San Miguel Citrus</div>
+  </body></html>`;
+  abrirPDF(html);
+}
+
+function abrirPDF(html){
+  const w=window.open('','_blank');
+  w.document.write(html);w.document.close();
+  setTimeout(()=>{w.focus();w.print();},500);
+}
+
+// ── TABS & TOAST ──
+function goTab(t){
+  ['plan','despacho','cierre'].forEach((x,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('on',x===t);
+    document.getElementById(`view-${x}`).classList.toggle('on',x===t);
+  });
+  if(t==='despacho'){renderEstadoPlan();renderHistDespachos();renderNovedades();}
+  if(t==='cierre') renderCierre();
+}
+
+let tt;
+function toast(msg,tipo='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className=`toast on${tipo==='err'?' err':tipo==='warn'?' warn':''}`;
+  clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('on'),2800);
+}
+
+init();
+</script>
+</body>
+</html>
