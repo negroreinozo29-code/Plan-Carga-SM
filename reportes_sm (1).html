@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reportes — San Miguel Citrus</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --bg:#060d06;--bg2:#0b150b;--bg3:#111c11;--bg4:#172217;
+  --v1:#0d2b0d;--v2:#1a4a1a;--v3:#2d7a2d;--v4:#4aaa4a;--vneon:#7ddf7d;
+  --n3:#e8812a;--n4:#f5a455;--r3:#e85555;
+  --borde:#1e2e1e;--borde2:#253525;
+  --t1:#ddeedd;--t2:#8aaa8a;--t3:#4a6a4a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;}
+
+.hdr{background:linear-gradient(135deg,#050d05,var(--v2));border-bottom:2px solid var(--n3);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
+.hdr-titulo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:3px;color:#fff;text-transform:uppercase;}
+.hdr-sub{font-size:10px;color:var(--n4);letter-spacing:1.5px;text-transform:uppercase;}
+.badge-ro{background:rgba(232,129,42,.15);border:1px solid var(--n3);border-radius:6px;padding:4px 12px;font-size:11px;color:var(--n4);font-weight:600;letter-spacing:1px;}
+
+.filtros{background:var(--bg2);border-bottom:1px solid var(--borde2);padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.filtros label{font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;}
+.filtros input[type=date]{background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:8px 12px;color:var(--t1);font-family:'Barlow',sans-serif;font-size:14px;outline:none;}
+.filtros input[type=date]:focus{border-color:var(--v4);}
+.btn-buscar{padding:9px 22px;background:var(--v3);border:none;border-radius:8px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+.btn-buscar:hover{background:var(--v4);}
+.btn-pdf{padding:9px 22px;background:var(--n3);border:none;border-radius:8px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+.btn-pdf:hover{background:var(--n4);}
+
+.contenido{padding:20px 24px;max-width:1200px;margin:0 auto;}
+
+/* KPI SEMANAL */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.kpi{background:var(--bg2);border:1px solid var(--borde2);border-radius:12px;padding:16px;text-align:center;}
+.kpi-num{font-family:'Barlow Condensed',sans-serif;font-size:42px;font-weight:900;line-height:1;}
+.kpi-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:4px;}
+.kpi.verde .kpi-num{color:var(--vneon);}
+.kpi.naranja .kpi-num{color:var(--n3);}
+.kpi.rojo .kpi-num{color:var(--r3);}
+.kpi.blanco .kpi-num{color:var(--t1);}
+
+/* CUMPLIMIENTO POR DÍA */
+.section-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--t3);text-transform:uppercase;padding:4px 0 10px;border-bottom:1px solid var(--borde2);margin-bottom:12px;}
+.dia-card{background:var(--bg2);border:1px solid var(--borde2);border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+.dia-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.dia-fecha{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--t1);}
+.dia-pcts{display:flex;gap:12px;align-items:center;}
+.pct-chip{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;}
+.pct-chip.op{color:var(--vneon);}
+.pct-chip.plan{color:var(--n3);}
+.pct-lbl{font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;}
+.barra-cont{height:6px;background:var(--bg4);border-radius:3px;margin-bottom:8px;overflow:hidden;}
+.barra{height:100%;border-radius:3px;transition:width .6s;}
+.barra.op{background:var(--vneon);}
+.barra.plan{background:var(--n3);}
+.dest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin-top:8px;}
+.dest-item{background:var(--bg3);border:1px solid var(--borde2);border-radius:6px;padding:6px 10px;font-size:11px;}
+.dest-nombre{color:var(--t2);margin-bottom:2px;font-size:10px;}
+.dest-val{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;}
+.dest-val.ok{color:var(--vneon);}
+.dest-val.parcial{color:var(--n3);}
+.dest-val.mal{color:var(--r3);}
+.dest-val.extra{color:var(--n4);}
+
+/* INTERNOS */
+.internos-section{margin-top:20px;}
+.int-dia{background:var(--bg2);border:1px solid var(--borde2);border-radius:10px;padding:14px;margin-bottom:10px;}
+.int-fecha{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;margin-bottom:10px;color:var(--t1);}
+.int-list{display:flex;flex-wrap:wrap;gap:6px;}
+.int-chip{background:var(--bg3);border:1px solid var(--borde2);border-radius:6px;padding:5px 10px;font-size:11px;}
+.int-chip .num{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:var(--vneon);}
+.int-chip .dest{color:var(--t2);font-size:10px;}
+.int-chip.extra{border-color:var(--n3);}
+.int-chip.extra .num{color:var(--n3);}
+
+/* NOVEDADES */
+.nov-item{background:var(--bg3);border-left:3px solid var(--borde2);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:6px;font-size:12px;}
+.nov-item.campo{border-left-color:var(--n3);}
+.nov-item.transporte{border-left-color:var(--r3);}
+.nov-meta{font-size:10px;color:var(--t2);margin-bottom:2px;}
+
+.empty{text-align:center;padding:40px;color:var(--t3);}
+.empty .ic{font-size:40px;margin-bottom:10px;}
+
+.loading{text-align:center;padding:40px;color:var(--t2);font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:2px;}
+
+/* DISTRIBUCIÓN DESTINOS */
+.dist-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.dist-card{background:var(--bg2);border:1px solid var(--borde2);border-radius:10px;padding:16px;}
+.dist-titulo{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;margin-bottom:12px;text-transform:uppercase;}
+.dist-titulo.sm{color:var(--vneon);}
+.dist-titulo.terceros{color:var(--n3);}
+.barra-dist{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.barra-dist-label{font-size:11px;color:var(--t2);min-width:80px;}
+.barra-dist-cont{flex:1;height:16px;background:var(--bg4);border-radius:4px;overflow:hidden;}
+.barra-dist-fill{height:100%;border-radius:4px;}
+.barra-dist-fill.sm{background:var(--vneon);}
+.barra-dist-fill.terceros{background:var(--n3);}
+.barra-dist-val{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;min-width:40px;text-align:right;}
+
+/* ANÁLISIS DESVÍOS */
+.desv-card{background:var(--bg2);border:1px solid var(--borde2);border-radius:10px;padding:16px;margin-bottom:12px;}
+.desv-barra{display:flex;height:28px;border-radius:6px;overflow:hidden;margin:12px 0;}
+.desv-seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;transition:width .6s;}
+.desv-seg.campo{background:var(--n3);}
+.desv-seg.transporte{background:var(--r3);}
+.desv-seg.sinjust{background:var(--bg4);color:var(--t3);}
+.desv-leyenda{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;}
+.desv-ley-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);}
+.desv-ley-dot{width:10px;height:10px;border-radius:50%;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-titulo">📊 Reportes de Jornada</div>
+    <div class="hdr-sub">San Miguel Citrus — Transporte Interno</div>
+  </div>
+  <div class="badge-ro">👁️ Solo lectura</div>
+</div>
+
+<div class="filtros">
+  <div>
+    <label>Desde</label><br>
+    <input type="date" id="fDesde">
+  </div>
+  <div>
+    <label>Hasta</label><br>
+    <input type="date" id="fHasta">
+  </div>
+  <button class="btn-buscar" onclick="buscar()">🔍 Consultar</button>
+  <button class="btn-pdf" onclick="generarPDF()">📄 PDF del informe</button>
+</div>
+
+<div class="contenido" id="contenido">
+  <div class="empty"><div class="ic">📋</div>Seleccioná un rango de fechas y hacé click en Consultar.</div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBWiU4I1tYW9tr4cELLzWL90UdmKim06kk",
+  authDomain: "plan-carga-sm.firebaseapp.com",
+  projectId: "plan-carga-sm",
+  storageBucket: "plan-carga-sm.firebasestorage.app",
+  messagingSenderId: "532165556845",
+  appId: "1:532165556845:web:54b63dd5be8d966139dd64"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Categorías de destinos
+const FINCAS_SM = ["MONTEGRANDE SM","CASPINCHANGO SM","LUZ MARIA SM","LULES SM","LAS SALINAS SM","SOFIA SM","ARBOL SOLO SM"];
+function tipoDestino(dest){
+  return FINCAS_SM.includes(dest) ? 'sm' : 'terceros';
+}
+
+// Setear rango por defecto: semana actual (lunes a hoy)
+function setDefaults(){
+  const hoy = new Date();
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay()-1));
+  document.getElementById('fDesde').value = lunes.toISOString().split('T')[0];
+  document.getElementById('fHasta').value = hoy.toISOString().split('T')[0];
+}
+
+function dateToKey(d){ return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`; }
+function dateToLabel(d){
+  const dias=['DOM','LUN','MAR','MIE','JUE','VIE','SAB'];
+  return `${dias[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+}
+function keyToDate(k){
+  const [d,m,y]=k.split('-').map(Number);
+  return new Date(y,m-1,d,12);
+}
+
+let _datos = []; // datos cargados para el PDF
+
+async function buscar(){
+  const desde = document.getElementById('fDesde').value;
+  const hasta = document.getElementById('fHasta').value;
+  if(!desde||!hasta){alert('Seleccioná las dos fechas.');return;}
+
+  const c = document.getElementById('contenido');
+  c.innerHTML = '<div class="loading">⏳ CONSULTANDO FIREBASE...</div>';
+
+  // Generar lista de claves de fechas del rango
+  const d0 = new Date(desde+'T12:00:00');
+  const d1 = new Date(hasta+'T12:00:00');
+  const fechas = [];
+  for(let d=new Date(d0); d<=d1; d.setDate(d.getDate()+1)){
+    fechas.push({ key: dateToKey(new Date(d)), label: dateToLabel(new Date(d)), date: new Date(d) });
+  }
+
+  // Traer planes y despachos de cada fecha
+  const datos = [];
+  for(const f of fechas){
+    const planDoc = await db.collection('planes').doc(f.key).get();
+    const cierreDoc = await db.collection('cierres').doc(f.key).get();
+
+    // Despachos del día desde colección despachos
+    const despSnap = await db.collection('despachos').where('fecha','==',
+      `${f.date.getDate()}/${f.date.getMonth()+1}/${f.date.getFullYear()}`).get();
+    const despachos = [];
+    despSnap.forEach(d=>despachos.push(d.data()));
+
+    const fuente = cierreDoc.exists ? cierreDoc.data() : (planDoc.exists ? planDoc.data() : null);
+    if(fuente || despachos.length>0){
+      datos.push({ ...f, plan: fuente?.plan||{}, novedades: fuente?.novedades||[], indLog: fuente?.indLog||[], despachos, tieneCierre: cierreDoc.exists });
+    }
+  }
+
+  _datos = datos;
+  renderReporte(datos);
+}
+
+function calcKPIs(datos){
+  let totalPlan=0, totalEjec=0, totalExtra=0, diasConDatos=0;
+  datos.forEach(d=>{
+    const plan = Object.values(d.plan).reduce((a,v)=>a+(v.camiones||0),0);
+    const ejec = d.despachos.length;
+    const extra = d.despachos.filter(x=>x.extraordinario).length;
+    if(plan>0||ejec>0) diasConDatos++;
+    totalPlan+=plan; totalEjec+=ejec; totalExtra+=extra;
+  });
+  const pctOp = totalPlan>0?Math.round(totalEjec/totalPlan*100):0;
+  const pctPlan = totalPlan>0?Math.round((totalEjec-totalExtra)/totalPlan*100):0;
+  return { totalPlan, totalEjec, totalExtra, pctOp, pctPlan, diasConDatos };
+}
+
+function renderReporte(datos){
+  if(datos.length===0){
+    document.getElementById('contenido').innerHTML='<div class="empty"><div class="ic">🔍</div>No hay datos para ese rango de fechas.</div>';
+    return;
+  }
+
+  const kpi = calcKPIs(datos);
+
+  let html = `
+  <div class="kpi-grid">
+    <div class="kpi verde"><div class="kpi-num">${kpi.pctOp}%</div><div class="kpi-lbl">Cumplimiento operativo</div></div>
+    <div class="kpi naranja"><div class="kpi-num">${kpi.pctPlan}%</div><div class="kpi-lbl">Cumplimiento del plan</div></div>
+    <div class="kpi blanco"><div class="kpi-num">${kpi.totalEjec}</div><div class="kpi-lbl">Despachos totales</div></div>
+    <div class="kpi naranja"><div class="kpi-num">${kpi.totalExtra}</div><div class="kpi-lbl">Extraordinarios</div></div>
+  </div>
+
+  <div class="section-title">📅 Cumplimiento por día</div>`;
+
+  datos.forEach(d=>{
+    const planTotal = Object.values(d.plan).reduce((a,v)=>a+(v.camiones||0),0);
+    const ejec = d.despachos.length;
+    const extra = d.despachos.filter(x=>x.extraordinario).length;
+    const pctOp = planTotal>0?Math.round(ejec/planTotal*100):0;
+    const pctPlan = planTotal>0?Math.round((ejec-extra)/planTotal*100):0;
+
+    // Destinos del plan
+    const destItems = Object.keys(d.plan).map(dest=>{
+      const p = d.plan[dest];
+      const disp = d.despachos.filter(x=>x.destino===dest&&!x.extraordinario).length;
+      const cls = disp>=p.camiones?'ok':disp>0?'parcial':'mal';
+      return `<div class="dest-item"><div class="dest-nombre">${dest}</div><div class="dest-val ${cls}">${disp}/${p.camiones}</div></div>`;
+    }).join('');
+
+    // Extraordinarios únicos
+    const extraMap={};
+    d.despachos.filter(x=>x.extraordinario).forEach(x=>{extraMap[x.destino]=(extraMap[x.destino]||0)+1;});
+    const extraItems = Object.keys(extraMap).map(dest=>
+      `<div class="dest-item"><div class="dest-nombre">⚠️ ${dest}</div><div class="dest-val extra">${extraMap[dest]}/0</div></div>`
+    ).join('');
+
+    html+=`<div class="dia-card">
+      <div class="dia-hdr">
+        <div>
+          <div class="dia-fecha">${d.label} ${d.tieneCierre?'<span style="font-size:11px;color:var(--vneon);">✅ Cierre</span>':'<span style="font-size:11px;color:var(--t3);">⏳ Sin cierre formal</span>'}</div>
+          <div style="font-size:11px;color:var(--t2);margin-top:2px;">${planTotal} planificados · ${ejec} ejecutados · ${extra} extraordinarios</div>
+        </div>
+        <div class="dia-pcts">
+          <div style="text-align:center"><div class="pct-chip op">${pctOp}%</div><div class="pct-lbl">Operativo</div></div>
+          <div style="text-align:center"><div class="pct-chip plan">${pctPlan}%</div><div class="pct-lbl">Plan</div></div>
+        </div>
+      </div>
+      <div class="barra-cont"><div class="barra op" style="width:${Math.min(pctOp,100)}%"></div></div>
+      <div class="dest-grid">${destItems}${extraItems}</div>
+    </div>`;
+  });
+
+  // Internos por día
+  html+=`<div class="section-title" style="margin-top:20px;">🚛 Internos por día</div>`;
+  datos.forEach(d=>{
+    if(d.despachos.length===0) return;
+    const chips = [...d.despachos].sort((a,b)=>a.hora?.localeCompare?.(b.hora)||0).map(x=>
+      `<div class="int-chip ${x.extraordinario?'extra':''}">
+        <div class="num">Int. ${x.interno}</div>
+        <div class="dest">${x.destino?.split(' ').slice(0,2).join(' ')||'—'}</div>
+        <div class="dest">${x.hora||'—'}</div>
+      </div>`
+    ).join('');
+    html+=`<div class="int-dia"><div class="int-fecha">${d.label}</div><div class="int-list">${chips}</div></div>`;
+  });
+
+  // Novedades de la semana
+  const todasNov = datos.flatMap(d=>d.novedades.map(n=>({...n,_fecha:d.label})));
+  if(todasNov.length>0){
+    html+=`<div class="section-title" style="margin-top:20px;">⚠️ Novedades registradas</div>`;
+    todasNov.forEach(n=>{
+      html+=`<div class="nov-item ${n.tipo||'campo'}">
+        <div class="nov-meta">${n._fecha} · ${n.tipo==='campo'?'🌿 Campo':'🚛 Transporte'} · ${n.destino||'—'}</div>
+        <div>${n.desc||'Sin descripción'}</div>
+      </div>`;
+    });
+  }
+
+  // ── DISTRIBUCIÓN POR TIPO DE DESTINO ──
+  html+=`<div class="section-title" style="margin-top:20px;">🏭 Distribución por tipo de destino</div>`;
+  html+=`<div class="dist-grid">`;
+
+  // Por día
+  datos.forEach(d=>{
+    if(d.despachos.length===0) return;
+    const totalD = d.despachos.length;
+    const sm = d.despachos.filter(x=>FINCAS_SM.includes(x.destino)).length;
+    const terc = totalD - sm;
+    const pctSM = totalD>0?Math.round(sm/totalD*100):0;
+    const pctTerc = totalD>0?Math.round(terc/totalD*100):0;
+    html+=`<div class="dist-card">
+      <div class="dist-titulo sm">🍋 ${d.label}</div>
+      <div class="barra-dist">
+        <div class="barra-dist-label">Fincas SM</div>
+        <div class="barra-dist-cont"><div class="barra-dist-fill sm" style="width:${pctSM}%"></div></div>
+        <div class="barra-dist-val" style="color:var(--vneon)">${sm} <span style="font-size:10px;color:var(--t2)">(${pctSM}%)</span></div>
+      </div>
+      <div class="barra-dist">
+        <div class="barra-dist-label">Empaques/Fincas 3°</div>
+        <div class="barra-dist-cont"><div class="barra-dist-fill terceros" style="width:${pctTerc}%"></div></div>
+        <div class="barra-dist-val" style="color:var(--n3)">${terc} <span style="font-size:10px;color:var(--t2)">(${pctTerc}%)</span></div>
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // Acumulado semanal distribución
+  const totalSem = _datos.reduce((a,d)=>a+d.despachos.length,0);
+  const smSem = _datos.reduce((a,d)=>a+d.despachos.filter(x=>FINCAS_SM.includes(x.destino)).length,0);
+  const tercSem = totalSem - smSem;
+  const pctSMSem = totalSem>0?Math.round(smSem/totalSem*100):0;
+  const pctTercSem = totalSem>0?Math.round(tercSem/totalSem*100):0;
+  html+=`<div class="desv-card" style="margin-bottom:20px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Acumulado del período — ${totalSem} despachos totales</div>
+    <div class="desv-barra">
+      <div class="desv-seg campo" style="width:${pctSMSem}%;background:var(--v3);">${pctSMSem>8?pctSMSem+'%':''}</div>
+      <div class="desv-seg transporte" style="width:${pctTercSem}%;">${pctTercSem>8?pctTercSem+'%':''}</div>
+    </div>
+    <div class="desv-leyenda">
+      <div class="desv-ley-item"><div class="desv-ley-dot" style="background:var(--v3)"></div>Fincas San Miguel: ${smSem} (${pctSMSem}%)</div>
+      <div class="desv-ley-item"><div class="desv-ley-dot" style="background:var(--r3)"></div>Empaques y Fincas de Terceros: ${tercSem} (${pctTercSem}%)</div>
+    </div>
+  </div>`;
+
+  // ── ANÁLISIS DE DESVÍOS ──
+  const todasNovDesv = _datos.flatMap(d=>d.novedades.map(n=>({...n,_fecha:d.label,_plan:d.plan})));
+  const totalDesvios = _datos.reduce((a,d)=>{
+    const plan = Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0);
+    const ejec = d.despachos.filter(x=>!x.extraordinario).length;
+    return a + Math.max(0, plan-ejec);
+  },0);
+
+  if(totalDesvios>0){
+    const novCampo = todasNovDesv.filter(n=>n.tipo==='campo').length;
+    const novTransp = todasNovDesv.filter(n=>n.tipo==='transporte').length;
+    const sinJust = Math.max(0, totalDesvios - novCampo - novTransp);
+    const pctCampo = totalDesvios>0?Math.round(novCampo/totalDesvios*100):0;
+    const pctTransp = totalDesvios>0?Math.round(novTransp/totalDesvios*100):0;
+    const pctSinJust = totalDesvios>0?Math.round(sinJust/totalDesvios*100):0;
+
+    html+=`<div class="section-title" style="margin-top:4px;">📊 Análisis de desvíos del período</div>
+    <div class="desv-card">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:12px;">Total de camiones con desvío respecto al plan: <strong style="color:var(--t1)">${totalDesvios}</strong></div>
+      <div class="desv-barra">
+        <div class="desv-seg campo" style="width:${pctCampo}%;">${pctCampo>8?pctCampo+'%':''}</div>
+        <div class="desv-seg transporte" style="width:${pctTransp}%;">${pctTransp>8?pctTransp+'%':''}</div>
+        <div class="desv-seg sinjust" style="width:${pctSinJust}%;">${pctSinJust>8?pctSinJust+'%':''}</div>
+      </div>
+      <div class="desv-leyenda">
+        <div class="desv-ley-item"><div class="desv-ley-dot" style="background:var(--n3)"></div>🌿 Responsabilidad Campo/Destino: ${novCampo} novedades (${pctCampo}%)</div>
+        <div class="desv-ley-item"><div class="desv-ley-dot" style="background:var(--r3)"></div>🚛 Responsabilidad Transporte Interno: ${novTransp} novedades (${pctTransp}%)</div>
+        <div class="desv-ley-item"><div class="desv-ley-dot" style="background:var(--bg4);border:1px solid var(--borde2)"></div>Sin justificación registrada: ${sinJust} (${pctSinJust}%)</div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:10px;font-style:italic;">* El análisis de responsabilidad se basa en las novedades registradas durante la jornada. Para mayor precisión, registrá siempre la novedad correspondiente al momento del desvío.</div>
+    </div>`;
+  }
+
+  document.getElementById('contenido').innerHTML=html;
+}
+
+function generarPDF(){
+  if(_datos.length===0){alert('Consultá primero un rango de fechas.');return;}
+  const kpi = calcKPIs(_datos);
+  const desde = document.getElementById('fDesde').value;
+  const hasta = document.getElementById('fHasta').value;
+
+  let filasHTML = _datos.map(d=>{
+    const planTotal = Object.values(d.plan).reduce((a,v)=>a+(v.camiones||0),0);
+    const ejec = d.despachos.length;
+    const extra = d.despachos.filter(x=>x.extraordinario).length;
+    const pctOp = planTotal>0?Math.round(ejec/planTotal*100):0;
+    const pctPlan = planTotal>0?Math.round((ejec-extra)/planTotal*100):0;
+    const color = pctOp>=90?'#2d7a2d':pctOp>=70?'#e8812a':'#c03030';
+    return `<tr>
+      <td>${d.label}</td>
+      <td style="text-align:center">${planTotal}</td>
+      <td style="text-align:center;font-weight:700">${ejec}</td>
+      <td style="text-align:center;color:#e8812a;font-weight:700">${extra}</td>
+      <td style="text-align:center;font-weight:700;color:${color}">${pctOp}%</td>
+      <td style="text-align:center;font-weight:700;color:${color}">${pctPlan}%</td>
+      <td style="font-size:11px">${d.tieneCierre?'✅ Cerrada':'⏳ Sin cierre'}</td>
+    </tr>`;
+  }).join('');
+
+  // Detalle de internos por día
+  let internosHTML = _datos.map(d=>{
+    if(d.despachos.length===0) return '';
+    const lista = [...d.despachos].sort((a,b)=>a.hora?.localeCompare?.(b.hora)||0)
+      .map(x=>`<tr${x.extraordinario?' style="background:#fff8f0"':''}>
+        <td>${d.label}</td>
+        <td style="font-weight:700">${x.interno}</td>
+        <td>${x.destino||'—'}</td>
+        <td>${x.hora||'—'}</td>
+        <td>${x.extraordinario?'⚠️ Extraordinario':'—'}</td>
+        <td style="font-size:11px;color:#666">${x.obs||'—'}</td>
+      </tr>`).join('');
+    return lista;
+  }).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body{font-family:Arial,sans-serif;padding:30px;color:#1a1a1a;max-width:1000px;margin:0 auto;}
+    .hdr{background:#1a4a1a;color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+    .hdr h1{font-size:24px;letter-spacing:2px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;letter-spacing:1px;margin-top:4px;}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+    .k{border-radius:8px;padding:14px;text-align:center;border:1px solid #e0e0e0;}
+    .k .num{font-size:30px;font-weight:900;}.k .lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+    .sec{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1a4a1a;margin:20px 0 8px;padding-bottom:4px;border-bottom:2px solid #1a4a1a;}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+    th{background:#1a4a1a;color:#fff;padding:8px 10px;text-align:left;font-size:11px;letter-spacing:.8px;text-transform:uppercase;}
+    td{padding:7px 10px;border-bottom:1px solid #eee;font-size:12px;}
+    tr:nth-child(even) td{background:#fafafa;}
+    .footer{margin-top:24px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}
+  </style></head><body>
+  <div class="hdr">
+    <div><h1>INFORME SEMANAL</h1><div class="sub">SAN MIGUEL CITRUS — TRANSPORTE INTERNO</div></div>
+    <div style="text-align:right;font-size:12px;opacity:.8">Período: ${desde} al ${hasta}<br>Generado: ${new Date().toLocaleString('es-AR')}</div>
+  </div>
+  <div class="kpi">
+    <div class="k" style="background:#f0f8f0;border-color:#2d7a2d"><div class="num" style="color:#2d7a2d">${kpi.pctOp}%</div><div class="lbl">Cumplimiento operativo</div></div>
+    <div class="k" style="background:#fff8f0;border-color:#e8812a"><div class="num" style="color:#e8812a">${kpi.pctPlan}%</div><div class="lbl">Cumplimiento del plan</div></div>
+    <div class="k"><div class="num" style="color:#1a4a1a">${kpi.totalEjec}</div><div class="lbl">Despachos totales</div></div>
+    <div class="k"><div class="num" style="color:#e8812a">${kpi.totalExtra}</div><div class="lbl">Extraordinarios</div></div>
+  </div>
+  <div class="sec">Cumplimiento por día</div>
+  <table><thead><tr><th>Día</th><th>Planificados</th><th>Ejecutados</th><th>Extraordinarios</th><th>% Operativo</th><th>% Plan</th><th>Estado</th></tr></thead>
+  <tbody>${filasHTML}</tbody></table>
+  <div class="sec">Detalle de internos despachados</div>
+  <table><thead><tr><th>Día</th><th>Interno</th><th>Destino</th><th>Hora</th><th>Tipo</th><th>Observación</th></tr></thead>
+  <tbody>${internosHTML}</tbody></table>
+  <div class="footer">Documento generado el ${new Date().toLocaleString('es-AR')} — San Miguel Citrus Logística</div>
+  </body></html>`;
+
+  const w=window.open('','_blank');
+  w.document.write(html);w.document.close();
+  setTimeout(()=>{w.focus();w.print();},500);
+}
+
+setDefaults();
+</script>
+</body>
+</html>
