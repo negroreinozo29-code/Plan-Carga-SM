@@ -169,7 +169,8 @@ function setDefaults(){
   document.getElementById('fHasta').value = hoy.toISOString().split('T')[0];
 }
 
-function dateToKey(d){ return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`; }
+function dateToKey(d){ return `${String(d.getDate()).padStart(2,'0')}-${d.getMonth()+1}-${d.getFullYear()}`; }
+function dateToKeyAlt(d){ return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`; }
 function dateToLabel(d){
   const dias=['DOM','LUN','MAR','MIE','JUE','VIE','SAB'];
   return `${dias[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
@@ -200,8 +201,10 @@ async function buscar(){
   // Traer planes y despachos de cada fecha
   const datos = [];
   for(const f of fechas){
-    const planDoc = await db.collection('planes').doc(f.key).get();
-    const cierreDoc = await db.collection('cierres').doc(f.key).get();
+    let planDoc = await db.collection('planes').doc(f.key).get();
+    if(!planDoc.exists) planDoc = await db.collection('planes').doc(dateToKeyAlt(f.date)).get();
+    let cierreDoc = await db.collection('cierres').doc(f.key).get();
+    if(!cierreDoc.exists) cierreDoc = await db.collection('cierres').doc(dateToKeyAlt(f.date)).get();
 
     // Despachos del día desde colección despachos
     const despSnap = await db.collection('despachos').where('fecha','==',
