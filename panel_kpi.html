@@ -170,6 +170,7 @@ function setDefaults(){
 }
 
 function dateToKey(d){ return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`; }
+function dateToKeyAlt(d){ return `${String(d.getDate()).padStart(2,'0')}-${d.getMonth()+1}-${d.getFullYear()}`; }
 function dateToFecha(d){ 
   // Generar ambos formatos posibles para cubrir variaciones en Firebase
   return `${String(d.getDate()).padStart(2,'0')}/${d.getMonth()+1}/${d.getFullYear()}`;
@@ -198,8 +199,11 @@ async function cargar(){
 
   const datos = [];
   for(const f of fechas){
-    const planDoc = await db.collection('planes').doc(f.key).get();
-    const cierreDoc = await db.collection('cierres').doc(f.key).get();
+    // Buscar plan con ambos formatos de clave
+    let planDoc = await db.collection('planes').doc(f.key).get();
+    if(!planDoc.exists) planDoc = await db.collection('planes').doc(dateToKeyAlt(f.date)).get();
+    let cierreDoc = await db.collection('cierres').doc(f.key).get();
+    if(!cierreDoc.exists) cierreDoc = await db.collection('cierres').doc(dateToKeyAlt(f.date)).get();
     // Buscar con ambos formatos de fecha para compatibilidad
     const [snap1, snap2] = await Promise.all([
       db.collection('despachos').where('fecha','==',f.fecha).get(),
