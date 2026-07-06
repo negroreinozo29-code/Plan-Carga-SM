@@ -235,7 +235,16 @@ async function cargar(){
 }
 
 function calcCamDisp(fuente){
-  if(!fuente) return 49; // default
+  // Prioridad 1: camionesDisponibles ingresado manualmente
+  // Firebase int64 puede venir como objeto {low, high} — lo convertimos
+  if(fuente?.camionesDisponibles){
+    const val = typeof fuente.camionesDisponibles === 'object' 
+      ? fuente.camionesDisponibles.toNumber?.() || parseInt(JSON.stringify(fuente.camionesDisponibles))
+      : parseInt(fuente.camionesDisponibles);
+    if(val > 0) return val;
+  }
+  // Prioridad 2: calcular desde TN/hora y horas de jornada
+  if(!fuente) return 49;
   const tn = fuente.tn||87;
   const ini = fuente.hInicio||'10:00';
   const fin = fuente.hFin||'06:00';
