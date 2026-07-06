@@ -226,11 +226,30 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
         <div class="ind-lbl">Horas disponibles</div>
       </div>
     </div>
-    <div class="ind-ctrl">
-      <label>Capacidad Industria</label>
-      <input type="number" id="tnInput" value="87" min="1" max="87">
-      <textarea id="tnMotivo" placeholder="Motivo del cambio..."></textarea>
-      <button class="btn-sm verde" onclick="cambiarIndustria()">Aplicar</button>
+
+    <!-- Toggle sin molienda -->
+    <div style="display:flex;align-items:center;gap:10px;margin:10px 0 6px;">
+      <input type="checkbox" id="sinMolienda" onchange="toggleSinMolienda()" style="width:16px;height:16px;accent-color:var(--n3);cursor:pointer;">
+      <label for="sinMolienda" style="font-size:12px;color:var(--n4);cursor:pointer;font-weight:600;">🚫 Jornada sin molienda (fin de fruta, paro, etc.)</label>
+    </div>
+
+    <!-- Panel normal industria -->
+    <div id="panelIndustria">
+      <div class="ind-ctrl">
+        <label>Capacidad Industria</label>
+        <input type="number" id="tnInput" value="87" min="1" max="87">
+        <textarea id="tnMotivo" placeholder="Motivo del cambio..."></textarea>
+        <button class="btn-sm verde" onclick="cambiarIndustria()">Aplicar</button>
+      </div>
+    </div>
+
+    <!-- Panel sin molienda -->
+    <div id="panelSinMolienda" style="display:none;background:rgba(232,129,42,0.08);border:1px solid var(--n3);border-radius:8px;padding:10px 12px;margin-top:6px;">
+      <div style="font-size:11px;color:var(--n4);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Camiones disponibles hoy</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <input type="number" id="camSinMolienda" min="1" max="100" placeholder="Ej: 49" value="${E?.camionesDisponibles||''}" style="width:80px;background:var(--bg);border:1px solid var(--n3);border-radius:6px;padding:8px;color:var(--n3);font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;text-align:center;outline:none;" oninput="calcular()">
+        <div style="font-size:11px;color:var(--t3);">Sin molienda activa — ingresá cuántos camiones tenés disponibles para el día</div>
+      </div>
     </div>
   </div>
 
@@ -526,7 +545,7 @@ function hoy(){
 function horaAhora(){return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Argentina/Buenos_Aires'});}
 function slug(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
 
-function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',tieneCorte:false,hCorteInicio:'11:00',hCorteFin:'17:00',plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[],camionesDisponibles:0};}
+function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',tieneCorte:false,hCorteInicio:'11:00',hCorteFin:'17:00',sinMolienda:false,plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[],camionesDisponibles:0};}
 
 let E=(()=>{
   try{
@@ -682,6 +701,11 @@ function init(){
     document.getElementById('hCorteInicio').value=E.hCorteInicio||'11:00';
     document.getElementById('hCorteFin').value=E.hCorteFin||'17:00';
   }
+  if(E.sinMolienda){
+    document.getElementById('sinMolienda').checked=true;
+    document.getElementById('panelIndustria').style.display='none';
+    document.getElementById('panelSinMolienda').style.display='block';
+  }
   restaurarPlan();
   calcular();
   poblarSelectores();
@@ -766,13 +790,34 @@ function toggleCorte(){
   calcular();save();
 }
 
+function toggleSinMolienda(){
+  const sin = document.getElementById('sinMolienda').checked;
+  E.sinMolienda = sin;
+  document.getElementById('panelIndustria').style.display = sin ? 'none' : 'block';
+  document.getElementById('panelSinMolienda').style.display = sin ? 'block' : 'none';
+  document.getElementById('tnActual').textContent = sin ? '—' : E.tn;
+  calcular();save();
+}
+
 function calcular(){
-  const tn=parseInt(document.getElementById('tnInput').value)||87;
   const ini=document.getElementById('hInicio').value;
   const fin=document.getElementById('hFin').value;
   const ci=document.getElementById('hCorteInicio')?.value||'11:00';
   const cf=document.getElementById('hCorteFin')?.value||'17:00';
   E.hInicio=ini;E.hFin=fin;E.hCorteInicio=ci;E.hCorteFin=cf;
+
+  if(E.sinMolienda){
+    // Modo sin molienda: camiones ingresados manualmente
+    const cam = parseInt(document.getElementById('camSinMolienda')?.value)||0;
+    document.getElementById('tnActual').textContent='—';
+    document.getElementById('hsDisp').textContent='—';
+    document.getElementById('camDisp').textContent=cam||'—';
+    document.getElementById('rDisponibles').textContent=cam||'—';
+    actualizarResumen();save();
+    return;
+  }
+
+  const tn=parseInt(document.getElementById('tnInput').value)||87;
   const hsTotales=calcHoras(ini,fin);
   const hsCorte=E.tieneCorte?calcHoras(ci,cf):0;
   const hs=Math.round((hsTotales-hsCorte)*10)/10;
