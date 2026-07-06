@@ -206,11 +206,17 @@ async function buscar(){
     let cierreDoc = await db.collection('cierres').doc(f.key).get();
     if(!cierreDoc.exists) cierreDoc = await db.collection('cierres').doc(dateToKeyAlt(f.date)).get();
 
-    // Despachos del día desde colección despachos
-    const despSnap = await db.collection('despachos').where('fecha','==',
-      `${f.date.getDate()}/${f.date.getMonth()+1}/${f.date.getFullYear()}`).get();
-    const despachos = [];
-    despSnap.forEach(d=>despachos.push(d.data()));
+    // Buscar despachos con ambos formatos de fecha
+    const _fechaConCero = `${String(f.date.getDate()).padStart(2,'0')}/${f.date.getMonth()+1}/${f.date.getFullYear()}`;
+    const _fechaSinCero = `${f.date.getDate()}/${f.date.getMonth()+1}/${f.date.getFullYear()}`;
+    const [_snap1, _snap2] = await Promise.all([
+      db.collection('despachos').where('fecha','==',_fechaConCero).get(),
+      db.collection('despachos').where('fecha','==',_fechaSinCero).get()
+    ]);
+    const _despMap = {};
+    _snap1.forEach(d=>{ _despMap[d.id]=d.data(); });
+    _snap2.forEach(d=>{ _despMap[d.id]=d.data(); });
+    const despachos = Object.values(_despMap);
 
     const fuente = cierreDoc.exists ? cierreDoc.data() : (planDoc.exists ? planDoc.data() : null);
     if(fuente || despachos.length>0){
