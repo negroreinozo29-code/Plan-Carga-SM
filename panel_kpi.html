@@ -169,8 +169,10 @@ function setDefaults(){
   document.getElementById('fHasta').value = hoy.toISOString().split('T')[0];
 }
 
-function dateToKey(d){ return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`; }
-function dateToKeyAlt(d){ return `${String(d.getDate()).padStart(2,'0')}-${d.getMonth()+1}-${d.getFullYear()}`; }
+// Firebase guarda las claves con día con cero: 01-7-2026
+function dateToKey(d){ return `${String(d.getDate()).padStart(2,'0')}-${d.getMonth()+1}-${d.getFullYear()}`; }
+// Alternativa sin cero por compatibilidad con registros viejos
+function dateToKeyAlt(d){ return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`; }
 function dateToFecha(d){ 
   // Generar ambos formatos posibles para cubrir variaciones en Firebase
   return `${String(d.getDate()).padStart(2,'0')}/${d.getMonth()+1}/${d.getFullYear()}`;
@@ -233,7 +235,16 @@ async function cargar(){
 }
 
 function calcCamDisp(fuente){
-  if(!fuente) return 49; // default
+  // Prioridad 1: camionesDisponibles ingresado manualmente
+  // Firebase int64 puede venir como objeto {low, high} — lo convertimos
+  if(fuente?.camionesDisponibles){
+    const val = typeof fuente.camionesDisponibles === 'object' 
+      ? fuente.camionesDisponibles.toNumber?.() || parseInt(JSON.stringify(fuente.camionesDisponibles))
+      : parseInt(fuente.camionesDisponibles);
+    if(val > 0) return val;
+  }
+  // Prioridad 2: calcular desde TN/hora y horas de jornada
+  if(!fuente) return 49;
   const tn = fuente.tn||87;
   const ini = fuente.hInicio||'10:00';
   const fin = fuente.hFin||'06:00';
@@ -276,8 +287,25 @@ function render(datos){
     const ejec=d.despachos.filter(x=>!x.extraordinario).length;
     return a+Math.max(0,plan-ejec);
   },0);
-  const novCampo = datos.reduce((a,d)=>a+d.novedades.filter(n=>n.tipo==='campo').length,0);
-  const novTransp = datos.reduce((a,d)=>a+d.novedades.filter(n=>n.tipo==='transporte').length,0);
+  // Solo contar novedades de destinos que realmente tienen desvío en el plan vigente
+  const novCampo = datos.reduce((a,d)=>{
+    return a + d.novedades.filter(n=>{
+      if(n.tipo!=='campo') return false;
+      const planDest = d.plan[n.destino];
+      if(!planDest) return false;
+      const ejec = d.despachos.filter(x=>x.destino===n.destino&&!x.extraordinario).length;
+      return ejec < planDest.camiones; // solo si hay desvío real
+    }).length;
+  },0);
+  const novTransp = datos.reduce((a,d)=>{
+    return a + d.novedades.filter(n=>{
+      if(n.tipo!=='transporte') return false;
+      const planDest = d.plan[n.destino];
+      if(!planDest) return false;
+      const ejec = d.despachos.filter(x=>x.destino===n.destino&&!x.extraordinario).length;
+      return ejec < planDest.camiones;
+    }).length;
+  },0);
   const sinJust = Math.max(0, totalDesvios - novCampo - novTransp);
   const pctCampo = totalDesvios>0?Math.round(novCampo/totalDesvios*100):0;
   const pctTransp = totalDesvios>0?Math.round(novTransp/totalDesvios*100):0;
@@ -455,8 +483,24 @@ function generarPDF(){
     const ejec=d.despachos.filter(x=>!x.extraordinario).length;
     return a+Math.max(0,plan-ejec);
   },0);
-  const novCampo = _datos.reduce((a,d)=>a+d.novedades.filter(n=>n.tipo==='campo').length,0);
-  const novTransp = _datos.reduce((a,d)=>a+d.novedades.filter(n=>n.tipo==='transporte').length,0);
+  const novCampo = _datos.reduce((a,d)=>{
+    return a + d.novedades.filter(n=>{
+      if(n.tipo!=='campo') return false;
+      const planDest = d.plan[n.destino];
+      if(!planDest) return false;
+      const ejec = d.despachos.filter(x=>x.destino===n.destino&&!x.extraordinario).length;
+      return ejec < planDest.camiones;
+    }).length;
+  },0);
+  const novTransp = _datos.reduce((a,d)=>{
+    return a + d.novedades.filter(n=>{
+      if(n.tipo!=='transporte') return false;
+      const planDest = d.plan[n.destino];
+      if(!planDest) return false;
+      const ejec = d.despachos.filter(x=>x.destino===n.destino&&!x.extraordinario).length;
+      return ejec < planDest.camiones;
+    }).length;
+  },0);
   const pctCampo = totalDesvios>0?Math.round(novCampo/totalDesvios*100):0;
   const pctTransp = totalDesvios>0?Math.round(novTransp/totalDesvios*100):0;
 
