@@ -17,8 +17,6 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;}
-
-/* HEADER */
 .hdr{background:linear-gradient(135deg,#050d05,var(--v2));border-bottom:2px solid var(--n3);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;}
 .hdr-left{display:flex;align-items:center;gap:12px;}
 .hdr-ico{width:42px;height:42px;background:var(--n3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;}
@@ -29,8 +27,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .dot-live{width:8px;height:8px;background:var(--vneon);border-radius:50%;animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 .clock{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--t2);}
-
-/* FILTROS */
+.btn-tv{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:5px 12px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;}
 .filtros{background:var(--bg2);border-bottom:1px solid var(--borde2);padding:10px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
 .filtros label{font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;}
 .filtros input[type=date]{background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:7px 10px;color:var(--t1);font-family:'Barlow',sans-serif;font-size:13px;outline:none;}
@@ -38,11 +35,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .btn.verde{background:var(--v3);color:#fff;}
 .btn.verde:hover{background:var(--v4);}
 .btn.naranja{background:var(--n3);color:#fff;}
-
-/* LAYOUT */
+.upd{font-size:11px;color:var(--t3);margin-left:8px;font-style:italic;}
 .main{padding:16px 24px;max-width:1400px;margin:0 auto;}
-
-/* KPI GRID PRINCIPAL */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
 .kpi-card{background:var(--bg2);border:1px solid var(--borde2);border-radius:14px;padding:18px 16px;text-align:center;position:relative;overflow:hidden;}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
@@ -57,16 +51,10 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .kpi-card.azul .kpi-num{color:#4a9aff;}
 .kpi-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:4px;}
 .kpi-sub{font-size:11px;color:var(--t3);margin-top:6px;}
-
-/* SEGUNDA FILA KPI */
 .kpi-grid2{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
-
-/* PANELS */
 .panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
 .panel{background:var(--bg2);border:1px solid var(--borde2);border-radius:14px;padding:16px;}
 .panel-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--t3);text-transform:uppercase;padding-bottom:10px;border-bottom:1px solid var(--borde2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
-
-/* BARRAS */
 .barra-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
 .barra-lbl{font-size:11px;color:var(--t2);width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .barra-cont{flex:1;height:20px;background:var(--bg4);border-radius:4px;overflow:hidden;}
@@ -75,44 +63,31 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .barra-fill.naranja{background:var(--n3);}
 .barra-fill.rojo{background:var(--r3);}
 .barra-val{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;width:48px;text-align:right;}
-
-/* DONA */
-.dona-wrap{display:flex;align-items:center;justify-content:center;gap:24px;}
-.dona-svg{flex-shrink:0;}
-.dona-legend{display:flex;flex-direction:column;gap:10px;}
-.dona-ley{display:flex;align-items:center;gap:8px;font-size:12px;}
-.dona-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
-.dona-pct{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;margin-left:4px;}
-
-/* TABLA DÍAS */
 .tabla-dias{width:100%;border-collapse:collapse;}
 .tabla-dias th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);padding:6px 10px;border-bottom:1px solid var(--borde2);text-align:left;}
 .tabla-dias td{padding:8px 10px;border-bottom:1px solid var(--borde);font-size:12px;}
 .tabla-dias tr:last-child td{border-bottom:none;}
-.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;}
-.badge.ok{background:rgba(74,170,74,.2);color:var(--vneon);}
-.badge.parcial{background:rgba(232,129,42,.2);color:var(--n4);}
-.badge.mal{background:rgba(232,85,85,.2);color:#f08080;}
-
-/* ROTACIÓN */
 .rot-display{text-align:center;padding:8px 0;}
 .rot-num{font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:900;color:#4a9aff;line-height:1;}
 .rot-sub{font-size:11px;color:var(--t2);margin-top:4px;}
 .rot-gauge{width:100%;height:12px;background:var(--bg4);border-radius:6px;overflow:hidden;margin:12px 0 6px;}
 .rot-gauge-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--r3),var(--n3),var(--vneon));transition:width .8s ease;}
 .rot-scale{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);}
-
-/* DESVÍOS STACKED BAR */
 .stack-bar{display:flex;height:32px;border-radius:6px;overflow:hidden;margin:10px 0;}
 .stack-seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;transition:width .8s;}
-
-/* LOADING */
 .loading{text-align:center;padding:60px;color:var(--t2);font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:2px;}
 .empty{text-align:center;padding:40px;color:var(--t3);}
+/* TV MODE */
+.tv-mode .filtros{display:none;}
+.tv-mode .kpi-num{font-size:72px;}
+.tv-mode .kpi-lbl{font-size:14px;}
+.tv-mode .kpi-sub{font-size:13px;}
+.tv-mode .panel-title{font-size:16px;}
+.tv-mode .tabla-dias td{font-size:15px;padding:11px;}
+.tv-mode .tabla-dias th{font-size:13px;}
 </style>
 </head>
 <body>
-
 <div class="hdr">
   <div class="hdr-left">
     <div class="hdr-ico">🍋</div>
@@ -124,21 +99,19 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
   <div class="hdr-right">
     <div class="badge-live"><div class="dot-live"></div>EN VIVO</div>
     <div class="clock" id="reloj">--:--</div>
+    <button class="btn-tv" onclick="toggleTV()" id="btnTV">📺 TV</button>
   </div>
 </div>
-
 <div class="filtros">
   <div><label>Desde</label><br><input type="date" id="fDesde"></div>
   <div><label>Hasta</label><br><input type="date" id="fHasta"></div>
   <button class="btn verde" onclick="cargar()">🔍 Consultar</button>
   <button class="btn naranja" onclick="generarPDF()">📄 PDF</button>
-  <span style="font-size:11px;color:var(--t3);margin-left:8px;" id="ultimaActualizacion"></span>
+  <span class="upd" id="ultimaActualizacion"></span>
 </div>
-
 <div class="main" id="main">
   <div class="empty"><br><br>📊 Seleccioná un rango de fechas y hacé click en Consultar.</div>
 </div>
-
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBWiU4I1tYW9tr4cELLzWL90UdmKim06kk",
@@ -150,17 +123,20 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
 const FINCAS_SM = ["MONTEGRANDE SM","CASPINCHANGO SM","LUZ MARIA SM","LULES SM","LAS SALINAS SM","SOFIA SM","ARBOL SOLO SM"];
 const DIAS_SEMANA = ['DOM','LUN','MAR','MIE','JUE','VIE','SAB'];
 
-// Reloj en tiempo real
+// Reloj
 setInterval(()=>{
-  const ahora = new Date();
-  document.getElementById('reloj').textContent = ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'America/Argentina/Buenos_Aires'});
+  document.getElementById('reloj').textContent = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'America/Argentina/Buenos_Aires'});
 },1000);
 
-// Defaults: semana actual
+// Modo TV
+function toggleTV(){
+  const on = document.body.classList.toggle('tv-mode');
+  document.getElementById('btnTV').textContent = on ? '❌ Salir TV' : '📺 TV';
+}
+
 function setDefaults(){
   const hoy = new Date();
   const lunes = new Date(hoy);
@@ -169,17 +145,10 @@ function setDefaults(){
   document.getElementById('fHasta').value = hoy.toISOString().split('T')[0];
 }
 
-// Firebase guarda las claves con día con cero: 01-7-2026
 function dateToKey(d){ return `${String(d.getDate()).padStart(2,'0')}-${d.getMonth()+1}-${d.getFullYear()}`; }
-// Alternativa sin cero por compatibilidad con registros viejos
 function dateToKeyAlt(d){ return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`; }
-function dateToFecha(d){ 
-  // Generar ambos formatos posibles para cubrir variaciones en Firebase
-  return `${String(d.getDate()).padStart(2,'0')}/${d.getMonth()+1}/${d.getFullYear()}`;
-}
-function dateToFechaAlt(d){ 
-  return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-}
+function dateToFecha(d){ return `${String(d.getDate()).padStart(2,'0')}/${d.getMonth()+1}/${d.getFullYear()}`; }
+function dateToFechaAlt(d){ return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`; }
 function dateToLabel(d){ return `${DIAS_SEMANA[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`; }
 
 let _datos = [];
@@ -189,24 +158,19 @@ async function cargar(){
   const desde = document.getElementById('fDesde').value;
   const hasta = document.getElementById('fHasta').value;
   if(!desde||!hasta) return;
-
   document.getElementById('main').innerHTML = '<div class="loading">⏳ CARGANDO DATOS...</div>';
-
   const d0 = new Date(desde+'T12:00:00');
   const d1 = new Date(hasta+'T12:00:00');
   const fechas = [];
   for(let d=new Date(d0); d<=d1; d.setDate(d.getDate()+1)){
     fechas.push({ key: dateToKey(new Date(d)), fecha: dateToFecha(new Date(d)), label: dateToLabel(new Date(d)), date: new Date(d) });
   }
-
   const datos = [];
   for(const f of fechas){
-    // Buscar plan con ambos formatos de clave
     let planDoc = await db.collection('planes').doc(f.key).get();
     if(!planDoc.exists) planDoc = await db.collection('planes').doc(dateToKeyAlt(f.date)).get();
     let cierreDoc = await db.collection('cierres').doc(f.key).get();
     if(!cierreDoc.exists) cierreDoc = await db.collection('cierres').doc(dateToKeyAlt(f.date)).get();
-    // Buscar con ambos formatos de fecha para compatibilidad
     const [snap1, snap2] = await Promise.all([
       db.collection('despachos').where('fecha','==',f.fecha).get(),
       db.collection('despachos').where('fecha','==',dateToFechaAlt(f.date)).get()
@@ -215,163 +179,97 @@ async function cargar(){
     snap1.forEach(d=>{ despachosMap[d.id]=d.data(); });
     snap2.forEach(d=>{ despachosMap[d.id]=d.data(); });
     const despachos = Object.values(despachosMap);
-
     const fuente = cierreDoc.exists ? cierreDoc.data() : (planDoc.exists ? planDoc.data() : null);
     if(fuente || despachos.length>0){
-      const plan = fuente?.plan||{};
-      const camDisp = calcCamDisp(fuente);
-      datos.push({ ...f, plan, novedades: fuente?.novedades||[], despachos, camDisp, tieneCierre: cierreDoc.exists });
+      datos.push({ ...f, plan: fuente?.plan||{}, novedades: fuente?.novedades||[], despachos, camDisp: calcCamDisp(fuente), tieneCierre: cierreDoc.exists });
     }
   }
-
   _datos = datos;
   render(datos);
-
   document.getElementById('ultimaActualizacion').textContent = `Actualizado: ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`;
-
-  // Auto-refresh cada 60 segundos
   if(_autoRefresh) clearInterval(_autoRefresh);
   _autoRefresh = setInterval(cargar, 60000);
 }
 
 function calcCamDisp(fuente){
-  // Prioridad 1: camionesDisponibles ingresado manualmente
-  // Firebase int64 puede venir como objeto {low, high} — lo convertimos
   if(fuente?.camionesDisponibles){
-    const val = typeof fuente.camionesDisponibles === 'object' 
+    const val = typeof fuente.camionesDisponibles === 'object'
       ? fuente.camionesDisponibles.toNumber?.() || parseInt(JSON.stringify(fuente.camionesDisponibles))
       : parseInt(fuente.camionesDisponibles);
     if(val > 0) return val;
   }
-  // Prioridad 2: calcular desde TN/hora y horas de jornada
   if(!fuente) return 49;
-  const tn = fuente.tn||87;
-  const ini = fuente.hInicio||'10:00';
-  const fin = fuente.hFin||'06:00';
-  const [hi,mi]=ini.split(':').map(Number);
-  const [hf,mf]=fin.split(':').map(Number);
+  const tn=fuente.tn||87, ini=fuente.hInicio||'10:00', fin=fuente.hFin||'06:00';
+  const [hi,mi]=ini.split(':').map(Number), [hf,mf]=fin.split(':').map(Number);
   let i=hi*60+mi, f=hf*60+mf;
   if(f<=i) f+=1440;
-  const hs=(f-i)/60;
-  return Math.floor(hs*tn/38);
+  return Math.floor((f-i)/60*tn/38);
+}
+
+// Solo novedades de destinos con desvío real en el plan vigente
+function contarNovedades(datos, tipo){
+  return datos.reduce((a,d)=>{
+    if(!d.tieneCierre) return a; // solo jornadas cerradas
+    return a + d.novedades.filter(n=>{
+      if(n.tipo!==tipo) return false;
+      const p = d.plan[n.destino];
+      if(!p) return false;
+      const ejec = d.despachos.filter(x=>x.destino===n.destino&&!x.extraordinario).length;
+      return ejec < p.camiones;
+    }).length;
+  },0);
 }
 
 function render(datos){
-  if(datos.length===0){
-    document.getElementById('main').innerHTML='<div class="empty">🔍 No hay datos para ese período.</div>';
-    return;
-  }
+  if(datos.length===0){ document.getElementById('main').innerHTML='<div class="empty">🔍 No hay datos para ese período.</div>'; return; }
 
-  // ── CÁLCULOS GLOBALES ──
   const totalPlan = datos.reduce((a,d)=>a+Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0),0);
   const totalEjec = datos.reduce((a,d)=>a+d.despachos.length,0);
   const totalExtra = datos.reduce((a,d)=>a+d.despachos.filter(x=>x.extraordinario).length,0);
   const totalPlanEjec = totalEjec - totalExtra;
   const pctOp = totalPlan>0?Math.round(totalEjec/totalPlan*100):0;
   const pctPlan = totalPlan>0?Math.round(totalPlanEjec/totalPlan*100):0;
-
-  // Fincas SM vs Terceros
   const totalSM = datos.reduce((a,d)=>a+d.despachos.filter(x=>FINCAS_SM.includes(x.destino)).length,0);
   const totalTerc = totalEjec - totalSM;
   const pctSM = totalEjec>0?Math.round(totalSM/totalEjec*100):0;
-  const pctTerc = totalEjec>0?Math.round(totalTerc/totalEjec*100):0;
-
-  // Rotación de camiones
+  const pctTerc = 100-pctSM;
   const totalCamDisp = datos.reduce((a,d)=>a+d.camDisp,0);
   const rotacion = totalCamDisp>0?(totalEjec/totalCamDisp).toFixed(2):0;
-  const pctUtilizacion = totalCamDisp>0?Math.round(totalEjec/totalCamDisp*100):0;
+  const pctUtil = totalCamDisp>0?Math.round(totalEjec/totalCamDisp*100):0;
 
-  // Desvíos
+  // Desvíos solo de jornadas CERRADAS
   const totalDesvios = datos.reduce((a,d)=>{
+    if(!d.tieneCierre) return a;
     const plan=Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0);
     const ejec=d.despachos.filter(x=>!x.extraordinario).length;
     return a+Math.max(0,plan-ejec);
   },0);
-  // Solo contar novedades de destinos que realmente tienen desvío en el plan vigente
-  const novCampo = datos.reduce((a,d)=>{
-    return a + d.novedades.filter(n=>{
-      if(n.tipo!=='campo') return false;
-      const planDest = d.plan[n.destino];
-      if(!planDest) return false;
-      const ejec = d.despachos.filter(x=>x.destino===n.destino&&!x.extraordinario).length;
-      return ejec < planDest.camiones; // solo si hay desvío real
-    }).length;
-  },0);
-  const novTransp = datos.reduce((a,d)=>{
-    return a + d.novedades.filter(n=>{
-      if(n.tipo!=='transporte') return false;
-      const planDest = d.plan[n.destino];
-      if(!planDest) return false;
-      const ejec = d.despachos.filter(x=>x.destino===n.destino&&!x.extraordinario).length;
-      return ejec < planDest.camiones;
-    }).length;
-  },0);
+  const novCampo = contarNovedades(datos,'campo');
+  const novTransp = contarNovedades(datos,'transporte');
   const sinJust = Math.max(0, totalDesvios - novCampo - novTransp);
   const pctCampo = totalDesvios>0?Math.round(novCampo/totalDesvios*100):0;
   const pctTransp = totalDesvios>0?Math.round(novTransp/totalDesvios*100):0;
   const pctSinJust = totalDesvios>0?Math.round(sinJust/totalDesvios*100):0;
 
-  // Destinos más frecuentes
-  const destCount = {};
-  datos.forEach(d=>d.despachos.forEach(x=>{ destCount[x.destino]=(destCount[x.destino]||0)+1; }));
-  const topDest = Object.entries(destCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const maxDest = topDest[0]?.[1]||1;
-
-  // ── RENDER ──
   let html = `
-  <!-- KPIs PRINCIPALES -->
   <div class="kpi-grid">
-    <div class="kpi-card verde">
-      <div class="kpi-num">${pctOp}%</div>
-      <div class="kpi-lbl">Cumplimiento operativo</div>
-      <div class="kpi-sub">${totalEjec} de ${totalPlan} camiones</div>
-    </div>
-    <div class="kpi-card naranja">
-      <div class="kpi-num">${pctPlan}%</div>
-      <div class="kpi-lbl">Cumplimiento del plan</div>
-      <div class="kpi-sub">${totalPlanEjec} al destino planificado</div>
-    </div>
-    <div class="kpi-card azul">
-      <div class="kpi-num">${totalEjec}</div>
-      <div class="kpi-lbl">Despachos totales</div>
-      <div class="kpi-sub">${totalExtra} extraordinarios</div>
-    </div>
-    <div class="kpi-card ${totalDesvios===0?'verde':totalDesvios<5?'naranja':'rojo'}">
-      <div class="kpi-num">${totalDesvios}</div>
-      <div class="kpi-lbl">Desvíos del plan</div>
-      <div class="kpi-sub">${datos.length} jornadas analizadas</div>
-    </div>
+    <div class="kpi-card verde"><div class="kpi-num">${pctOp}%</div><div class="kpi-lbl">Cumplimiento operativo</div><div class="kpi-sub">${totalEjec} de ${totalPlan} camiones</div></div>
+    <div class="kpi-card naranja"><div class="kpi-num">${pctPlan}%</div><div class="kpi-lbl">Cumplimiento del plan</div><div class="kpi-sub">${totalPlanEjec} al destino planificado</div></div>
+    <div class="kpi-card azul"><div class="kpi-num">${totalEjec}</div><div class="kpi-lbl">Despachos totales</div><div class="kpi-sub">${totalExtra} extraordinarios</div></div>
+    <div class="kpi-card ${totalDesvios===0?'verde':totalDesvios<5?'naranja':'rojo'}"><div class="kpi-num">${totalDesvios}</div><div class="kpi-lbl">Desvíos del plan</div><div class="kpi-sub">Solo jornadas cerradas</div></div>
   </div>
-
-  <!-- KPIs SECUNDARIOS -->
   <div class="kpi-grid2">
-    <div class="kpi-card verde">
-      <div class="kpi-num">${pctSM}%</div>
-      <div class="kpi-lbl">🍋 Fincas San Miguel</div>
-      <div class="kpi-sub">${totalSM} despachos</div>
-    </div>
-    <div class="kpi-card naranja">
-      <div class="kpi-num">${pctTerc}%</div>
-      <div class="kpi-lbl">🏭 Empaques y Fincas 3°</div>
-      <div class="kpi-sub">${totalTerc} despachos</div>
-    </div>
-    <div class="kpi-card azul">
-      <div class="kpi-num">${rotacion}</div>
-      <div class="kpi-lbl">🔄 Rotación de camiones</div>
-      <div class="kpi-sub">viajes/camión disponible · ${pctUtilizacion}% utilización</div>
-    </div>
+    <div class="kpi-card verde"><div class="kpi-num">${pctSM}%</div><div class="kpi-lbl">🍋 Fincas San Miguel</div><div class="kpi-sub">${totalSM} despachos</div></div>
+    <div class="kpi-card naranja"><div class="kpi-num">${pctTerc}%</div><div class="kpi-lbl">🏭 Empaques y Fincas 3°</div><div class="kpi-sub">${totalTerc} despachos</div></div>
+    <div class="kpi-card azul"><div class="kpi-num">${rotacion}</div><div class="kpi-lbl">🔄 Rotación de camiones</div><div class="kpi-sub">viajes/camión · ${pctUtil}% utilización</div></div>
   </div>
-
-  <!-- PANELS -->
   <div class="panels">
 
-    <!-- Panel: Cumplimiento por día -->
+    <!-- Cumplimiento por jornada -->
     <div class="panel">
       <div class="panel-title">📅 Cumplimiento por jornada</div>
       <table class="tabla-dias">
-        <thead><tr>
-          <th>Día</th><th>Plan</th><th>Ejec.</th><th>% Op</th><th>% Plan</th><th>Estado</th>
-        </tr></thead>
+        <thead><tr><th>Día</th><th>Plan</th><th>Ejec.</th><th>% Op</th><th>% Plan</th><th>Estado</th></tr></thead>
         <tbody>
         ${datos.map(d=>{
           const plan=Object.values(d.plan).reduce((a,v)=>a+(v.camiones||0),0);
@@ -379,37 +277,64 @@ function render(datos){
           const extra=d.despachos.filter(x=>x.extraordinario).length;
           const pOp=plan>0?Math.round(ejec/plan*100):0;
           const pPlan=plan>0?Math.round((ejec-extra)/plan*100):0;
-          const cls=pOp>=90?'ok':pOp>=70?'parcial':'mal';
+          const cerrada=d.tieneCierre;
+          const estadoLabel=cerrada?(pOp>=90?'✅ OK':pOp>=70?'⚠️ Parc.':'❌ Bajo'):'⏳ En curso';
+          const estadoColor=cerrada?(pOp>=90?'var(--vneon)':pOp>=70?'var(--n3)':'var(--r3)'):'var(--t2)';
           return `<tr>
             <td style="font-weight:600">${d.label}</td>
             <td>${plan}</td>
             <td style="font-weight:700">${ejec}</td>
             <td style="color:var(--vneon);font-weight:700">${pOp}%</td>
-            <td style="color:var(--n3);font-weight:700">${pPlan}%</td>
-            <td><span class="badge ${cls}">${pOp>=90?'OK':pOp>=70?'Parc.':'Bajo'}</span></td>
+            <td style="color:var(--n3);font-weight:700">${cerrada?pPlan+'%':'—'}</td>
+            <td style="font-weight:700;color:${estadoColor}">${estadoLabel}</td>
           </tr>`;
         }).join('')}
         </tbody>
       </table>
     </div>
 
-    <!-- Panel: Top destinos -->
+    <!-- Estado por destino EN VIVO -->
     <div class="panel">
-      <div class="panel-title">📍 Destinos más frecuentes</div>
-      ${topDest.map(([dest,cant])=>{
-        const esSM = FINCAS_SM.includes(dest);
-        const pct = Math.round(cant/totalEjec*100);
-        return `<div class="barra-row">
-          <div class="barra-lbl" title="${dest}">${dest.split(' ').slice(0,2).join(' ')}</div>
-          <div class="barra-cont"><div class="barra-fill ${esSM?'verde':'naranja'}" style="width:${Math.round(cant/maxDest*100)}%"></div></div>
-          <div class="barra-val" style="color:${esSM?'var(--vneon)':'var(--n3)'}">${cant}</div>
-        </div>`;
-      }).join('')}
+      <div class="panel-title">📍 Estado por destino <span style="font-size:10px;color:var(--vneon);animation:pulse 1.5s infinite">● EN VIVO</span></div>
+      ${(()=>{
+        const destMap = {};
+        datos.forEach(d=>{
+          Object.keys(d.plan).forEach(dest=>{
+            if(!destMap[dest]) destMap[dest]={plan:0,ejec:0,novedades:[],enCurso:false};
+            destMap[dest].plan += d.plan[dest].camiones||0;
+            destMap[dest].ejec += d.despachos.filter(x=>x.destino===dest&&!x.extraordinario).length;
+            destMap[dest].novedades.push(...d.novedades.filter(n=>n.destino===dest&&!n.resuelta));
+            if(!d.tieneCierre) destMap[dest].enCurso=true;
+          });
+        });
+        const sorted = Object.entries(destMap).sort((a,b)=>b[1].ejec-a[1].ejec).slice(0,8);
+        if(sorted.length===0) return '<div style="text-align:center;color:var(--t3);padding:20px;">Sin datos de destinos</div>';
+        return sorted.map(([dest,v])=>{
+          const pct=v.plan>0?Math.round(v.ejec/v.plan*100):0;
+          const color=pct>=100?'var(--vneon)':pct>=70?'var(--n3)':'var(--r3)';
+          const desvio=v.ejec<v.plan;
+          const novs=v.novedades.filter(n=>desvio);
+          return `<div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <div style="font-size:11px;color:var(--t1);font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${dest}">${dest.split(' ').slice(0,3).join(' ')}</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:${color}">${v.ejec}/${v.plan}</div>
+                <div style="font-size:11px;font-weight:700;color:${color}">${pct}%</div>
+                <span>${v.enCurso?'⏳':'✅'}</span>
+              </div>
+            </div>
+            <div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;border-radius:3px;background:${color};width:${Math.min(pct,100)}%;transition:width .6s;"></div>
+            </div>
+            ${novs.length>0?`<div style="font-size:10px;color:var(--n4);margin-top:3px;font-style:italic;">⚠️ ${novs[0].desc?.slice(0,60)||''}${(novs[0].desc?.length||0)>60?'...':''}</div>`:''}
+          </div>`;
+        }).join('');
+      })()}
     </div>
 
-    <!-- Panel: Análisis de desvíos -->
+    <!-- Análisis de desvíos -->
     <div class="panel">
-      <div class="panel-title">⚠️ Origen de desvíos <span style="font-size:10px;color:var(--t3)">${totalDesvios} total</span></div>
+      <div class="panel-title">⚠️ Origen de desvíos <span style="font-size:10px;color:var(--t3)">${totalDesvios} total · solo jornadas cerradas</span></div>
       ${totalDesvios>0?`
       <div class="stack-bar">
         <div class="stack-seg" style="width:${pctCampo}%;background:var(--n3);">${pctCampo>8?pctCampo+'%':''}</div>
@@ -429,19 +354,17 @@ function render(datos){
           <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:12px;height:12px;border-radius:3px;background:var(--bg4);border:1px solid var(--borde2)"></div>Sin justificación</div>
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--t3)">${pctSinJust}%</div>
         </div>
-      </div>`:'<div style="text-align:center;padding:20px;color:var(--vneon);font-size:13px;">✅ Sin desvíos en el período</div>'}
+      </div>`:'<div style="text-align:center;padding:20px;color:var(--vneon);font-size:13px;">✅ Sin desvíos en jornadas cerradas</div>'}
     </div>
 
-    <!-- Panel: Rotación de camiones -->
+    <!-- Rotación de camiones -->
     <div class="panel">
       <div class="panel-title">🔄 Rotación de camiones</div>
       <div class="rot-display">
         <div class="rot-num">${rotacion}</div>
         <div class="rot-sub">viajes por camión disponible por jornada</div>
       </div>
-      <div class="rot-gauge">
-        <div class="rot-gauge-fill" style="width:${Math.min(pctUtilizacion,100)}%"></div>
-      </div>
+      <div class="rot-gauge"><div class="rot-gauge-fill" style="width:${Math.min(pctUtil,100)}%"></div></div>
       <div class="rot-scale"><span>0%</span><span>50%</span><span>100%</span></div>
       <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;">
         <div style="background:var(--bg3);border-radius:8px;padding:10px;">
@@ -449,12 +372,9 @@ function render(datos){
           <div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;">Camiones-día disponibles</div>
         </div>
         <div style="background:var(--bg3);border-radius:8px;padding:10px;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--vneon)">${pctUtilizacion}%</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--vneon)">${pctUtil}%</div>
           <div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;">Utilización de flota</div>
         </div>
-      </div>
-      <div style="font-size:10px;color:var(--t3);margin-top:10px;text-align:center;">
-        Camiones disponibles calculados desde el plan confirmado de cada jornada
       </div>
     </div>
 
@@ -465,62 +385,41 @@ function render(datos){
 
 function generarPDF(){
   if(_datos.length===0){alert('Consultá primero un período.');return;}
-  const desde = document.getElementById('fDesde').value;
-  const hasta = document.getElementById('fHasta').value;
-
-  const totalPlan = _datos.reduce((a,d)=>a+Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0),0);
-  const totalEjec = _datos.reduce((a,d)=>a+d.despachos.length,0);
-  const totalExtra = _datos.reduce((a,d)=>a+d.despachos.filter(x=>x.extraordinario).length,0);
-  const pctOp = totalPlan>0?Math.round(totalEjec/totalPlan*100):0;
-  const pctPlan = totalPlan>0?Math.round((totalEjec-totalExtra)/totalPlan*100):0;
-  const totalSM = _datos.reduce((a,d)=>a+d.despachos.filter(x=>FINCAS_SM.includes(x.destino)).length,0);
-  const totalTerc = totalEjec - totalSM;
-  const totalCamDisp = _datos.reduce((a,d)=>a+d.camDisp,0);
-  const rotacion = totalCamDisp>0?(totalEjec/totalCamDisp).toFixed(2):0;
-  const pctUtil = totalCamDisp>0?Math.round(totalEjec/totalCamDisp*100):0;
-  const totalDesvios = _datos.reduce((a,d)=>{
+  const desde=document.getElementById('fDesde').value, hasta=document.getElementById('fHasta').value;
+  const totalPlan=_datos.reduce((a,d)=>a+Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0),0);
+  const totalEjec=_datos.reduce((a,d)=>a+d.despachos.length,0);
+  const totalExtra=_datos.reduce((a,d)=>a+d.despachos.filter(x=>x.extraordinario).length,0);
+  const pctOp=totalPlan>0?Math.round(totalEjec/totalPlan*100):0;
+  const pctPlan=totalPlan>0?Math.round((totalEjec-totalExtra)/totalPlan*100):0;
+  const totalSM=_datos.reduce((a,d)=>a+d.despachos.filter(x=>FINCAS_SM.includes(x.destino)).length,0);
+  const totalTerc=totalEjec-totalSM;
+  const totalCamDisp=_datos.reduce((a,d)=>a+d.camDisp,0);
+  const rotacion=totalCamDisp>0?(totalEjec/totalCamDisp).toFixed(2):0;
+  const pctUtil=totalCamDisp>0?Math.round(totalEjec/totalCamDisp*100):0;
+  const totalDesvios=_datos.reduce((a,d)=>{
+    if(!d.tieneCierre) return a;
     const plan=Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0);
     const ejec=d.despachos.filter(x=>!x.extraordinario).length;
     return a+Math.max(0,plan-ejec);
   },0);
-  const novCampo = _datos.reduce((a,d)=>{
-    return a + d.novedades.filter(n=>{
-      if(n.tipo!=='campo') return false;
-      const planDest = d.plan[n.destino];
-      if(!planDest) return false;
-      const ejec = d.despachos.filter(x=>x.destino===n.destino&&!x.extraordinario).length;
-      return ejec < planDest.camiones;
-    }).length;
-  },0);
-  const novTransp = _datos.reduce((a,d)=>{
-    return a + d.novedades.filter(n=>{
-      if(n.tipo!=='transporte') return false;
-      const planDest = d.plan[n.destino];
-      if(!planDest) return false;
-      const ejec = d.despachos.filter(x=>x.destino===n.destino&&!x.extraordinario).length;
-      return ejec < planDest.camiones;
-    }).length;
-  },0);
-  const pctCampo = totalDesvios>0?Math.round(novCampo/totalDesvios*100):0;
-  const pctTransp = totalDesvios>0?Math.round(novTransp/totalDesvios*100):0;
-
-  const filasDias = _datos.map(d=>{
+  const novCampo=contarNovedades(_datos,'campo');
+  const novTransp=contarNovedades(_datos,'transporte');
+  const pctCampo=totalDesvios>0?Math.round(novCampo/totalDesvios*100):0;
+  const pctTransp=totalDesvios>0?Math.round(novTransp/totalDesvios*100):0;
+  const filasDias=_datos.map(d=>{
     const plan=Object.values(d.plan).reduce((a,v)=>a+(v.camiones||0),0);
-    const ejec=d.despachos.length;
-    const extra=d.despachos.filter(x=>x.extraordinario).length;
+    const ejec=d.despachos.length, extra=d.despachos.filter(x=>x.extraordinario).length;
     const pOp=plan>0?Math.round(ejec/plan*100):0;
     const pPlan=plan>0?Math.round((ejec-extra)/plan*100):0;
     const color=pOp>=90?'#2d7a2d':pOp>=70?'#e8812a':'#c03030';
-    return `<tr>
-      <td>${d.label}</td><td style="text-align:center">${plan}</td>
+    const estado=d.tieneCierre?(pOp>=90?'✅ OK':pOp>=70?'⚠️ Parc.':'❌ Bajo'):'⏳ En curso';
+    return `<tr><td>${d.label}</td><td style="text-align:center">${plan}</td>
       <td style="text-align:center;font-weight:700">${ejec}</td>
       <td style="text-align:center;font-weight:700;color:#e8812a">${extra}</td>
       <td style="text-align:center;font-weight:700;color:${color}">${pOp}%</td>
-      <td style="text-align:center;font-weight:700;color:${color}">${pPlan}%</td>
-      <td style="text-align:center">${d.tieneCierre?'✅':'⏳'}</td>
-    </tr>`;
+      <td style="text-align:center;font-weight:700;color:${color}">${d.tieneCierre?pPlan+'%':'—'}</td>
+      <td style="text-align:center;font-weight:700;color:${color}">${estado}</td></tr>`;
   }).join('');
-
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     body{font-family:Arial,sans-serif;padding:28px;color:#1a1a1a;max-width:1000px;margin:0 auto;}
     .hdr{background:#1a4a1a;color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
@@ -537,7 +436,7 @@ function generarPDF(){
     .footer{margin-top:20px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}
   </style></head><body>
   <div class="hdr">
-    <div><h1>DASHBOARD KPI — INFORME DE PERÍODO</h1><div class="sub">SAN MIGUEL CITRUS — LOGÍSTICA TRANSPORTE INTERNO</div></div>
+    <div><h1>DASHBOARD KPI</h1><div class="sub">SAN MIGUEL CITRUS — LOGÍSTICA TRANSPORTE INTERNO</div></div>
     <div style="text-align:right;font-size:12px;opacity:.8">Período: ${desde} al ${hasta}<br>Generado: ${new Date().toLocaleString('es-AR')}</div>
   </div>
   <div class="kpi">
@@ -547,11 +446,11 @@ function generarPDF(){
     <div class="k"><div class="num" style="color:#e8812a">${totalExtra}</div><div class="lbl">Extraordinarios</div></div>
   </div>
   <div class="kpi2">
-    <div class="k" style="background:#f0f8f0;border-color:#2d7a2d"><div class="num" style="color:#2d7a2d">${Math.round(totalSM/totalEjec*100)||0}%</div><div class="lbl">🍋 Fincas San Miguel (${totalSM})</div></div>
-    <div class="k" style="background:#fff8f0;border-color:#e8812a"><div class="num" style="color:#e8812a">${Math.round(totalTerc/totalEjec*100)||0}%</div><div class="lbl">🏭 Empaques y Fincas 3° (${totalTerc})</div></div>
+    <div class="k" style="background:#f0f8f0;border-color:#2d7a2d"><div class="num" style="color:#2d7a2d">${Math.round(totalSM/totalEjec*100)||0}%</div><div class="lbl">🍋 Fincas SM (${totalSM})</div></div>
+    <div class="k" style="background:#fff8f0;border-color:#e8812a"><div class="num" style="color:#e8812a">${Math.round(totalTerc/totalEjec*100)||0}%</div><div class="lbl">🏭 Terceros (${totalTerc})</div></div>
     <div class="k"><div class="num" style="color:#4a9aff">${rotacion}x</div><div class="lbl">🔄 Rotación · ${pctUtil}% utilización</div></div>
   </div>
-  <div class="sec">Análisis de desvíos</div>
+  <div class="sec">Análisis de desvíos (solo jornadas cerradas)</div>
   <div style="background:#f5f5f5;border-radius:8px;padding:14px;margin-bottom:16px;">
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
       <div><div style="font-size:28px;font-weight:900;color:#e8812a">${pctCampo}%</div><div style="font-size:11px;color:#666">🌿 Responsabilidad Campo</div></div>
@@ -560,11 +459,10 @@ function generarPDF(){
     </div>
   </div>
   <div class="sec">Detalle por jornada</div>
-  <table><thead><tr><th>Día</th><th>Plan</th><th>Ejec.</th><th>Extr.</th><th>% Op.</th><th>% Plan</th><th>Cierre</th></tr></thead>
+  <table><thead><tr><th>Día</th><th>Plan</th><th>Ejec.</th><th>Extr.</th><th>% Op.</th><th>% Plan</th><th>Estado</th></tr></thead>
   <tbody>${filasDias}</tbody></table>
   <div class="footer">Generado el ${new Date().toLocaleString('es-AR')} — San Miguel Citrus Logística</div>
   </body></html>`;
-
   const w=window.open('','_blank');
   w.document.write(html);w.document.close();
   setTimeout(()=>{w.focus();w.print();},500);
