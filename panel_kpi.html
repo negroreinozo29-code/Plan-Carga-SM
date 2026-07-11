@@ -307,19 +307,34 @@ function render(datos){
             if(!d.tieneCierre) destMap[dest].enCurso=true;
           });
         });
-        const sorted = Object.entries(destMap).sort((a,b)=>b[1].ejec-a[1].ejec).slice(0,8);
+        // Agregar extraordinarios al mapa de destinos
+        datos.forEach(d=>{
+          d.despachos.filter(x=>x.extraordinario).forEach(x=>{
+            if(!destMap[x.destino]) destMap[x.destino]={plan:0,ejec:0,novedades:[],enCurso:!d.tieneCierre,extras:[],obsExtras:[]};
+            if(!destMap[x.destino].extras) destMap[x.destino].extras=[];
+            if(!destMap[x.destino].obsExtras) destMap[x.destino].obsExtras=[];
+            destMap[x.destino].extras.push(x);
+            if(x.obs && x.obs.trim()) destMap[x.destino].obsExtras.push(`Int.${x.interno}: ${x.obs}`);
+          });
+        });
+
+        const sorted = Object.entries(destMap).sort((a,b)=>(b[1].ejec+( b[1].extras?.length||0))-(a[1].ejec+(a[1].extras?.length||0))).slice(0,8);
         if(sorted.length===0) return '<div style="text-align:center;color:var(--t3);padding:20px;">Sin datos de destinos</div>';
         return sorted.map(([dest,v])=>{
-          const pct=v.plan>0?Math.round(v.ejec/v.plan*100):0;
-          const color=pct>=100?'var(--vneon)':pct>=70?'var(--n3)':'var(--r3)';
-          const desvio=v.ejec<v.plan;
-          const novs=v.novedades.filter(n=>desvio);
-          return `<div style="margin-bottom:10px;">
+          const totalEjecReal = v.ejec + (v.extras?.length||0);
+          const pct = v.plan>0?Math.round(totalEjecReal/v.plan*100):0;
+          const color = pct>=100?'var(--vneon)':pct>=70?'var(--n3)':'var(--r3)';
+          const desvio = v.ejec < v.plan;
+          const novs = v.novedades.filter(n=>desvio);
+          const tieneExtra = (v.extras?.length||0) > 0;
+          const obsExtra = v.obsExtras?.join(' / ')||'';
+          return `<div style="margin-bottom:12px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
               <div style="font-size:11px;color:var(--t1);font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${dest}">${dest.split(' ').slice(0,3).join(' ')}</div>
               <div style="display:flex;align-items:center;gap:8px;">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:${color}">${v.ejec}/${v.plan}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:${color}">${totalEjecReal}/${v.plan}</div>
                 <div style="font-size:11px;font-weight:700;color:${color}">${pct}%</div>
+                ${tieneExtra?`<span style="font-size:10px;color:var(--n3);font-weight:700;">+${v.extras.length}⚠️</span>`:''}
                 <span>${v.enCurso?'⏳':'✅'}</span>
               </div>
             </div>
@@ -327,6 +342,7 @@ function render(datos){
               <div style="height:100%;border-radius:3px;background:${color};width:${Math.min(pct,100)}%;transition:width .6s;"></div>
             </div>
             ${novs.length>0?`<div style="font-size:10px;color:var(--n4);margin-top:3px;font-style:italic;">⚠️ ${novs[0].desc?.slice(0,60)||''}${(novs[0].desc?.length||0)>60?'...':''}</div>`:''}
+            ${tieneExtra&&obsExtra?`<div style="font-size:10px;color:var(--n3);margin-top:3px;font-style:italic;">💬 ${obsExtra.slice(0,80)}${obsExtra.length>80?'...':''}</div>`:''}
           </div>`;
         }).join('');
       })()}
