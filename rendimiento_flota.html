@@ -50,7 +50,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .cal-panel{background:var(--bg2);border:1px solid var(--borde2);border-radius:14px;padding:16px;margin-bottom:16px;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;}
 .cal-dia-label{font-size:10px;color:var(--t3);text-align:center;font-weight:700;text-transform:uppercase;padding:4px 0;}
-.cal-dia{border-radius:6px;padding:6px 4px;text-align:center;font-size:11px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.cal-dia{border-radius:6px;padding:6px 4px;text-align:center;font-size:11px;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;padding-top:6px;}
 .cal-dia.vacio{background:var(--bg3);color:var(--t3);}
 .cal-dia.activo{background:rgba(45,122,45,.2);border:1px solid var(--v3);}
 .cal-dia.inactivo{background:var(--bg3);border:1px solid var(--borde);}
@@ -134,7 +134,11 @@ async function cargar(){
   }
   const despachos=Object.values(despachosMap);
   const porDestino={};despachos.forEach(d=>{porDestino[d.destino]=(porDestino[d.destino]||0)+1;});
-  const porFecha={};despachos.forEach(d=>{porFecha[d._fecha]=(porFecha[d._fecha]||0)+1;});
+  const porFecha={};despachos.forEach(d=>{
+    if(!porFecha[d._fecha]) porFecha[d._fecha]={viajes:0,destinos:[]};
+    porFecha[d._fecha].viajes++;
+    porFecha[d._fecha].destinos.push(d.destino);
+  });
   const rotacion=dias>0?(despachos.length/dias).toFixed(2):0;
   _resultado={interno,desde,hasta,dias,despachos,porDestino,porFecha,fechas,rotacion};
   render();
@@ -172,8 +176,14 @@ function render(){
         let celdas='';
         for(let i=0;i<primerDia;i++) celdas+=`<div class="cal-dia vacio"></div>`;
         fechas.forEach(f=>{
-          const viajes=porFecha[f.fecha]||0;
-          celdas+=`<div class="cal-dia ${viajes>0?'activo':'inactivo'}"><div class="cal-fecha">${f.date.getDate()}/${f.date.getMonth()+1}</div><div class="cal-viajes">${viajes>0?viajes:'—'}</div></div>`;
+          const diaData=porFecha[f.fecha];
+          const viajes=diaData?diaData.viajes:0;
+          const destsDia=diaData?[...new Set(diaData.destinos)].slice(0,2).map(d=>d.split(' ').slice(0,2).join(' ')):[];
+          celdas+=`<div class="cal-dia ${viajes>0?'activo':'inactivo'}">
+            <div class="cal-fecha">${f.date.getDate()}/${f.date.getMonth()+1}</div>
+            <div class="cal-viajes">${viajes>0?viajes:'—'}</div>
+            ${destsDia.map(d=>`<div style="font-size:9px;color:var(--t2);line-height:1.2;text-align:center;">${d}</div>`).join('')}
+          </div>`;
         });
         return celdas;
       })()}
