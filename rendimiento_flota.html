@@ -17,6 +17,12 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .hdr-titulo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:3px;color:#fff;text-transform:uppercase;}
 .hdr-sub{font-size:10px;color:var(--n4);letter-spacing:1.5px;text-transform:uppercase;}
 .clock{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--t2);}
+/* TABS */
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--borde2);}
+.tab{flex:1;padding:11px 6px;text-align:center;font-size:11px;font-weight:600;color:var(--t3);cursor:pointer;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid transparent;transition:all .2s;}
+.tab.on{color:var(--n3);border-bottom-color:var(--n3);background:rgba(232,129,42,.05);}
+.view{display:none;}
+.view.on{display:block;}
 .filtros{background:var(--bg2);border-bottom:1px solid var(--borde2);padding:12px 24px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
 .filtros label{display:block;font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
 .filtros select,.filtros input[type=date]{background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:8px 10px;color:var(--t1);font-family:'Barlow',sans-serif;font-size:13px;outline:none;}
@@ -57,6 +63,13 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .cal-dia .cal-fecha{font-size:10px;color:var(--t2);}
 .cal-dia .cal-viajes{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--vneon);}
 .cal-dia.inactivo .cal-viajes{color:var(--t3);}
+/* DETALLE POR DIA - vista destino */
+.dia-item{background:var(--bg3);border:1px solid var(--borde);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+.dia-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.dia-fecha{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--n3);}
+.dia-total{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--vneon);}
+.int-tag{display:inline-block;background:var(--bg4);border:1px solid var(--borde2);border-radius:6px;padding:3px 10px;margin:2px;font-size:12px;color:var(--t1);}
+.int-tag span{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--vneon);margin-right:3px;}
 .loading{text-align:center;padding:60px;color:var(--t2);font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:2px;}
 .empty{text-align:center;padding:50px;color:var(--t3);}
 .empty .ic{font-size:40px;margin-bottom:12px;}
@@ -74,78 +87,133 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
   </div>
   <div class="clock" id="reloj">--:--</div>
 </div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab on" onclick="goTab('interno')">🚛 Por Interno</div>
+  <div class="tab" onclick="goTab('destino')">📍 Por Destino</div>
+</div>
+
+<!-- FILTROS INTERNO -->
+<div class="view on" id="view-interno">
 <div class="filtros">
   <div><label>Interno</label><select id="selInterno"><option value="">— Seleccioná —</option></select></div>
   <div><label>Período rápido</label><div class="periodos">
-    <button class="btn-periodo on" id="btnSemana" onclick="setPeriodo('semana',this)">Semana</button>
-    <button class="btn-periodo" id="btnQuincena" onclick="setPeriodo('quincena',this)">Quincena</button>
-    <button class="btn-periodo" id="btnMes" onclick="setPeriodo('mes',this)">Mes</button>
+    <button class="btn-periodo on" id="btnSemana" onclick="setPeriodo('semana',this,'fDesde','fHasta')">Semana</button>
+    <button class="btn-periodo" onclick="setPeriodo('quincena',this,'fDesde','fHasta')">Quincena</button>
+    <button class="btn-periodo" onclick="setPeriodo('mes',this,'fDesde','fHasta')">Mes</button>
   </div></div>
   <div><label>Desde</label><input type="date" id="fDesde"></div>
   <div><label>Hasta</label><input type="date" id="fHasta"></div>
-  <button class="btn verde" onclick="cargar()">🔍 Ver informe</button>
-  <button class="btn naranja" onclick="generarPDF()">📄 PDF</button>
+  <button class="btn verde" onclick="cargarInterno()">🔍 Ver informe</button>
+  <button class="btn naranja" onclick="generarPDFInterno()">📄 PDF</button>
   <span class="upd" id="upd"></span>
 </div>
-<div class="main" id="main">
+<div class="main" id="main-interno">
   <div class="empty"><div class="ic">🚛</div>Seleccioná un interno y un período para ver su informe.</div>
 </div>
+</div>
+
+<!-- FILTROS DESTINO -->
+<div class="view" id="view-destino">
+<div class="filtros">
+  <div><label>Destino</label><select id="selDestino"><option value="">— Seleccioná —</option></select></div>
+  <div><label>Período rápido</label><div class="periodos">
+    <button class="btn-periodo on" id="btnSemanaD" onclick="setPeriodo('semana',this,'fDesdeD','fHastaD')">Semana</button>
+    <button class="btn-periodo" onclick="setPeriodo('quincena',this,'fDesdeD','fHastaD')">Quincena</button>
+    <button class="btn-periodo" onclick="setPeriodo('mes',this,'fDesdeD','fHastaD')">Mes</button>
+  </div></div>
+  <div><label>Desde</label><input type="date" id="fDesdeD"></div>
+  <div><label>Hasta</label><input type="date" id="fHastaD"></div>
+  <button class="btn verde" onclick="cargarDestino()">🔍 Ver informe</button>
+  <button class="btn naranja" onclick="generarPDFDestino()">📄 PDF</button>
+  <span class="upd" id="updD"></span>
+</div>
+<div class="main" id="main-destino">
+  <div class="empty"><div class="ic">📍</div>Seleccioná un destino y un período para ver su informe.</div>
+</div>
+</div>
+
 <script>
 const firebaseConfig={apiKey:"AIzaSyBWiU4I1tYW9tr4cELLzWL90UdmKim06kk",authDomain:"plan-carga-sm.firebaseapp.com",projectId:"plan-carga-sm",storageBucket:"plan-carga-sm.firebasestorage.app",messagingSenderId:"532165556845",appId:"1:532165556845:web:54b63dd5be8d966139dd64"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+
 const INTERNOS=[10,11,12,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100];
+const DESTINOS=["PK AGROPECUARIA EL SAUCE","PK AGRO ALIANZA","PK ROTTA LEDESMA","VICENTE TRAPANI - FRUTEX","FGF TRAPANI","PK ACEQUIONES UNIFRUTTI","PK SIGSTAD","PK LAPACHO AMARILLO","PK SAGITARIO","PK LA PATRIA","FINCA NOUGUES LULES","FINCA MARIA LUISA","FINCA MONTE BELLO","FINCA LA ROSA EL TIMBO","FINCA PUERTA NEGRA EL CADILLAL","FINCA LA ROSA SAUCE HUACHO","FINCA SALOMON CASPINCHANGO","LAS MARIAS NYNAGRO","LEDESMA - EL RODEO","DON OCTAVIO I - LAS TALITAS","DON OCTAVIO II - LA GRANJA","DON OCTAVIO III - TIMBO NUEVO","FINCA BLAZQUEZ","FINCA DELOTTE","FYL TRANS","FINCA DONATO ALVAREZ","MONTEGRANDE SM","CASPINCHANGO SM","LUZ MARIA SM","LULES SM","LAS SALINAS SM","SOFIA SM","ARBOL SOLO SM"];
 const DIAS_SEMANA=['DOM','LUN','MAR','MIE','JUE','VIE','SAB'];
-const sel=document.getElementById('selInterno');
-INTERNOS.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=`Interno ${n}`;sel.appendChild(o);});
+
+// Poblar selectores
+const selInt=document.getElementById('selInterno');
+INTERNOS.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=`Interno ${n}`;selInt.appendChild(o);});
+const selDest=document.getElementById('selDestino');
+DESTINOS.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;selDest.appendChild(o);});
+
 setInterval(()=>{document.getElementById('reloj').textContent=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'America/Argentina/Buenos_Aires'});},1000);
-let _resultado=null;
-function setPeriodo(tipo,btn){
-  document.querySelectorAll('.btn-periodo').forEach(b=>b.classList.remove('on'));
-  if(btn) btn.classList.add('on');
+
+function goTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('on',['interno','destino'][i]===t));
+  document.querySelectorAll('.view').forEach((el,i)=>el.classList.toggle('on',['interno','destino'][i]===t));
+}
+
+function setPeriodo(tipo,btn,desdeId,hastaId){
+  btn.closest('.periodos').querySelectorAll('.btn-periodo').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
   const hoy=new Date();let desde;
   if(tipo==='semana'){desde=new Date(hoy);desde.setDate(hoy.getDate()-(hoy.getDay()===0?6:hoy.getDay()-1));}
   else if(tipo==='quincena'){desde=new Date(hoy);desde.setDate(hoy.getDate()-14);}
   else{desde=new Date(hoy.getFullYear(),hoy.getMonth(),1);}
-  document.getElementById('fDesde').value=desde.toISOString().split('T')[0];
-  document.getElementById('fHasta').value=hoy.toISOString().split('T')[0];
+  document.getElementById(desdeId).value=desde.toISOString().split('T')[0];
+  document.getElementById(hastaId).value=hoy.toISOString().split('T')[0];
 }
+
 function dateToFecha(d){return `${String(d.getDate()).padStart(2,'0')}/${d.getMonth()+1}/${d.getFullYear()}`;}
 function dateToFechaAlt(d){return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;}
-async function cargar(){
-  const interno=document.getElementById('selInterno').value;
-  const desde=document.getElementById('fDesde').value;
-  const hasta=document.getElementById('fHasta').value;
-  if(!interno){alert('Seleccioná un interno');return;}
-  if(!desde||!hasta){alert('Seleccioná el período');return;}
-  document.getElementById('main').innerHTML='<div class="loading">⏳ CARGANDO...</div>';
+
+async function fetchDespachos(fechas, filtro){
+  const map={};
+  for(const f of fechas){
+    const queries=[
+      db.collection('despachos').where('fecha','==',f.fecha).where(filtro.campo,'==',filtro.valor).get(),
+      db.collection('despachos').where('fecha','==',f.fechaAlt).where(filtro.campo,'==',filtro.valor).get()
+    ];
+    const [s1,s2]=await Promise.all(queries);
+    s1.forEach(d=>{map[d.id]={...d.data(),_fecha:f.fecha,_date:f.date};});
+    s2.forEach(d=>{map[d.id]={...d.data(),_fecha:f.fecha,_date:f.date};});
+  }
+  return Object.values(map);
+}
+
+function buildFechas(desde,hasta){
   const d0=new Date(desde+'T12:00:00'),d1=new Date(hasta+'T12:00:00');
-  const dias=Math.round((d1-d0)/86400000)+1;
   const fechas=[];
   for(let d=new Date(d0);d<=d1;d.setDate(d.getDate()+1)) fechas.push({fecha:dateToFecha(new Date(d)),fechaAlt:dateToFechaAlt(new Date(d)),date:new Date(d)});
-  const despachosMap={};
-  for(const f of fechas){
-    const [s1,s2]=await Promise.all([
-      db.collection('despachos').where('fecha','==',f.fecha).where('interno','==',String(interno)).get(),
-      db.collection('despachos').where('fecha','==',f.fechaAlt).where('interno','==',String(interno)).get()
-    ]);
-    s1.forEach(d=>{despachosMap[d.id]={...d.data(),_fecha:f.fecha,_date:f.date};});
-    s2.forEach(d=>{despachosMap[d.id]={...d.data(),_fecha:f.fecha,_date:f.date};});
-  }
-  const despachos=Object.values(despachosMap);
+  return{fechas,dias:Math.round((d1-d0)/86400000)+1};
+}
+
+// ── POR INTERNO ──
+let _resInterno=null;
+async function cargarInterno(){
+  const interno=document.getElementById('selInterno').value;
+  const desde=document.getElementById('fDesde').value,hasta=document.getElementById('fHasta').value;
+  if(!interno){alert('Seleccioná un interno');return;}
+  if(!desde||!hasta){alert('Seleccioná el período');return;}
+  document.getElementById('main-interno').innerHTML='<div class="loading">⏳ CARGANDO...</div>';
+  const{fechas,dias}=buildFechas(desde,hasta);
+  const despachos=await fetchDespachos(fechas,{campo:'interno',valor:String(interno)});
   const porDestino={};despachos.forEach(d=>{porDestino[d.destino]=(porDestino[d.destino]||0)+1;});
   const porFecha={};despachos.forEach(d=>{
     if(!porFecha[d._fecha]) porFecha[d._fecha]={viajes:0,destinos:[]};
-    porFecha[d._fecha].viajes++;
-    porFecha[d._fecha].destinos.push(d.destino);
+    porFecha[d._fecha].viajes++;porFecha[d._fecha].destinos.push(d.destino);
   });
   const rotacion=dias>0?(despachos.length/dias).toFixed(2):0;
-  _resultado={interno,desde,hasta,dias,despachos,porDestino,porFecha,fechas,rotacion};
-  render();
+  _resInterno={interno,desde,hasta,dias,despachos,porDestino,porFecha,fechas,rotacion};
+  renderInterno();
   document.getElementById('upd').textContent=`Actualizado: ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`;
 }
-function render(){
-  const{interno,dias,despachos,porDestino,porFecha,fechas,rotacion}=_resultado;
+
+function renderInterno(){
+  const{interno,dias,despachos,porDestino,porFecha,fechas,rotacion}=_resInterno;
   const total=despachos.length;
   const destOrdenados=Object.entries(porDestino).sort((a,b)=>b[1]-a[1]);
   const maxDest=destOrdenados[0]?.[1]||1;
@@ -164,55 +232,133 @@ function render(){
     html+=`<div class="panel"><div class="empty"><div class="ic">📭</div>Sin viajes registrados para el Interno ${interno} en este período.</div></div>`;
   } else {
     html+=`<div class="panel"><div class="panel-title">📍 Destinos visitados — ordenados por frecuencia</div>
-      ${destOrdenados.map(([dest,cant])=>{
-        const pct=Math.round(cant/total*100);
-        return `<div class="dest-row"><div class="dest-info"><div class="dest-nombre">${dest}</div><div class="dest-meta"><span class="dest-cant">${cant}</span><span class="dest-pct">${pct}%</span></div></div><div class="barra-cont"><div class="barra-fill" style="width:${Math.round(cant/maxDest*100)}%"></div></div></div>`;
-      }).join('')}
+      ${destOrdenados.map(([dest,cant])=>{const pct=Math.round(cant/total*100);return `<div class="dest-row"><div class="dest-info"><div class="dest-nombre">${dest}</div><div class="dest-meta"><span class="dest-cant">${cant}</span><span class="dest-pct">${pct}%</span></div></div><div class="barra-cont"><div class="barra-fill" style="width:${Math.round(cant/maxDest*100)}%"></div></div></div>`;}).join('')}
     </div>`;
     html+=`<div class="cal-panel"><div class="panel-title">📅 Actividad por día</div><div class="cal-grid">
       ${DIAS_SEMANA.map(d=>`<div class="cal-dia-label">${d}</div>`).join('')}
       ${(()=>{
-        const primerDia=fechas[0].date.getDay();
-        let celdas='';
+        const primerDia=fechas[0].date.getDay();let celdas='';
         for(let i=0;i<primerDia;i++) celdas+=`<div class="cal-dia vacio"></div>`;
         fechas.forEach(f=>{
-          const diaData=porFecha[f.fecha];
-          const viajes=diaData?diaData.viajes:0;
+          const diaData=porFecha[f.fecha];const viajes=diaData?diaData.viajes:0;
           const destsDia=diaData?[...new Set(diaData.destinos)].slice(0,2).map(d=>d.split(' ').slice(0,2).join(' ')):[];
-          celdas+=`<div class="cal-dia ${viajes>0?'activo':'inactivo'}">
-            <div class="cal-fecha">${f.date.getDate()}/${f.date.getMonth()+1}</div>
-            <div class="cal-viajes">${viajes>0?viajes:'—'}</div>
-            ${destsDia.map(d=>`<div style="font-size:9px;color:var(--t2);line-height:1.2;text-align:center;">${d}</div>`).join('')}
-          </div>`;
+          celdas+=`<div class="cal-dia ${viajes>0?'activo':'inactivo'}"><div class="cal-fecha">${f.date.getDate()}/${f.date.getMonth()+1}</div><div class="cal-viajes">${viajes>0?viajes:'—'}</div>${destsDia.map(d=>`<div style="font-size:9px;color:var(--t2);line-height:1.2;text-align:center;">${d}</div>`).join('')}</div>`;
         });
         return celdas;
       })()}
     </div></div>`;
   }
-  document.getElementById('main').innerHTML=html;
+  document.getElementById('main-interno').innerHTML=html;
 }
-function generarPDF(){
-  if(!_resultado){alert('Consultá primero un interno.');return;}
-  const{interno,desde,hasta,dias,despachos,porDestino,rotacion}=_resultado;
+
+// ── POR DESTINO ──
+let _resDestino=null;
+async function cargarDestino(){
+  const destino=document.getElementById('selDestino').value;
+  const desde=document.getElementById('fDesdeD').value,hasta=document.getElementById('fHastaD').value;
+  if(!destino){alert('Seleccioná un destino');return;}
+  if(!desde||!hasta){alert('Seleccioná el período');return;}
+  document.getElementById('main-destino').innerHTML='<div class="loading">⏳ CARGANDO...</div>';
+  const{fechas,dias}=buildFechas(desde,hasta);
+  const despachos=await fetchDespachos(fechas,{campo:'destino',valor:destino});
+  // Por interno
+  const porInterno={};despachos.forEach(d=>{porInterno[d.interno]=(porInterno[d.interno]||0)+1;});
+  // Por fecha
+  const porFecha={};despachos.forEach(d=>{
+    if(!porFecha[d._fecha]) porFecha[d._fecha]={viajes:0,internos:[]};
+    porFecha[d._fecha].viajes++;porFecha[d._fecha].internos.push(d.interno);
+  });
+  _resDestino={destino,desde,hasta,dias,despachos,porInterno,porFecha,fechas};
+  renderDestino();
+  document.getElementById('updD').textContent=`Actualizado: ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`;
+}
+
+function renderDestino(){
+  const{destino,dias,despachos,porInterno,porFecha,fechas}=_resDestino;
+  const total=despachos.length;
+  const intOrdenados=Object.entries(porInterno).sort((a,b)=>b[1]-a[1]);
+  const maxInt=intOrdenados[0]?.[1]||1;
+  const diasActivos=Object.keys(porFecha).length;
+
+  let html=`<div class="int-card">
+    <div style="flex:1;min-width:200px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">Destino</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--vneon);line-height:1.2;">${destino}</div>
+    </div>
+    <div class="int-sep"></div>
+    <div class="int-stats">
+      <div class="int-stat"><div class="int-stat-num" style="color:var(--vneon)">${total}</div><div class="int-stat-lbl">Viajes totales</div></div>
+      <div class="int-stat"><div class="int-stat-num" style="color:var(--n3)">${diasActivos}</div><div class="int-stat-lbl">Días con actividad</div></div>
+      <div class="int-stat"><div class="int-stat-num" style="color:var(--t2)">${intOrdenados.length}</div><div class="int-stat-lbl">Internos distintos</div></div>
+      <div class="int-stat"><div class="int-stat-num" style="color:#4a9aff">${diasActivos>0?(total/diasActivos).toFixed(1):0}</div><div class="int-stat-lbl">Prom. v/día activo</div></div>
+    </div>
+  </div>`;
+
+  if(total===0){
+    html+=`<div class="panel"><div class="empty"><div class="ic">📭</div>Sin viajes registrados para ${destino} en este período.</div></div>`;
+  } else {
+    // Ranking de internos
+    html+=`<div class="panel"><div class="panel-title">🚛 Internos que fueron a este destino — por frecuencia</div>
+      ${intOrdenados.map(([int,cant])=>{const pct=Math.round(cant/total*100);return `<div class="dest-row"><div class="dest-info"><div class="dest-nombre">Interno ${int}</div><div class="dest-meta"><span class="dest-cant">${cant}</span><span class="dest-pct">${pct}%</span></div></div><div class="barra-cont"><div class="barra-fill" style="width:${Math.round(cant/maxInt*100)}%"></div></div></div>`;}).join('')}
+    </div>`;
+
+    // Detalle por día
+    const diasOrdenados=Object.entries(porFecha).sort((a,b)=>a[0].localeCompare(b[0]));
+    html+=`<div class="panel"><div class="panel-title">📅 Detalle por día</div>
+      ${diasOrdenados.map(([fecha,data])=>{
+        const internos=[...new Set(data.internos)].sort((a,b)=>a-b);
+        return `<div class="dia-item">
+          <div class="dia-header">
+            <div class="dia-fecha">${fecha}</div>
+            <div style="display:flex;align-items:center;gap:8px;"><div class="dia-total">${data.viajes}</div><div style="font-size:10px;color:var(--t2);">viajes</div></div>
+          </div>
+          <div>${internos.map(i=>`<span class="int-tag">Int. ${i}</span>`).join('')}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  document.getElementById('main-destino').innerHTML=html;
+}
+
+// ── PDFs ──
+function generarPDFInterno(){
+  if(!_resInterno){alert('Consultá primero un interno.');return;}
+  const{interno,desde,hasta,dias,despachos,porDestino,rotacion}=_resInterno;
   const total=despachos.length;
   const destOrdenados=Object.entries(porDestino).sort((a,b)=>b[1]-a[1]);
   const rotColor=rotacion>=1.5?'#2d7a2d':rotacion>=0.8?'#e8812a':'#c03030';
   const filas=destOrdenados.map(([dest,cant])=>`<tr><td>${dest}</td><td style="text-align:center;font-weight:700;font-size:16px;color:#2d7a2d">${cant}</td><td style="text-align:center;font-weight:700;color:#1a4a1a">${Math.round(cant/total*100)}%</td></tr>`).join('');
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:28px;color:#1a1a1a;max-width:800px;margin:0 auto;}.hdr{background:#1a4a1a;color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}.hdr h1{font-size:22px;letter-spacing:2px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;margin-top:3px;}.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}.k{border-radius:8px;padding:14px;text-align:center;border:1px solid #e0e0e0;}.k .num{font-size:32px;font-weight:900;}.k .lbl{font-size:10px;color:#666;text-transform:uppercase;margin-top:2px;}.sec{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1a4a1a;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #1a4a1a;}table{width:100%;border-collapse:collapse;}th{background:#1a4a1a;color:#fff;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;}td{padding:8px 10px;border-bottom:1px solid #eee;font-size:13px;}tr:nth-child(even)td{background:#fafafa;}.footer{margin-top:20px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}</style></head><body>
-  <div class="hdr"><div><h1>INFORME DE RENDIMIENTO — INTERNO ${interno}</h1><div class="sub">SAN MIGUEL CITRUS — LOGÍSTICA TRANSPORTE INTERNO</div></div><div style="text-align:right;font-size:12px;opacity:.8">Período: ${desde} al ${hasta}<br>${dias} días</div></div>
-  <div class="kpi">
-    <div class="k" style="background:#f0f8f0;border-color:#2d7a2d"><div class="num" style="color:#2d7a2d">${total}</div><div class="lbl">Viajes totales</div></div>
-    <div class="k"><div class="num" style="color:${rotColor}">${rotacion}</div><div class="lbl">Rotación (v/día)</div></div>
-    <div class="k"><div class="num" style="color:#1a4a1a">${dias}</div><div class="lbl">Días del período</div></div>
-    <div class="k"><div class="num" style="color:#e8812a">${destOrdenados.length}</div><div class="lbl">Destinos distintos</div></div>
-  </div>
+  <div class="hdr"><div><h1>RENDIMIENTO — INTERNO ${interno}</h1><div class="sub">SAN MIGUEL CITRUS — LOGÍSTICA TRANSPORTE INTERNO</div></div><div style="text-align:right;font-size:12px;opacity:.8">Período: ${desde} al ${hasta}<br>${dias} días</div></div>
+  <div class="kpi"><div class="k" style="background:#f0f8f0;border-color:#2d7a2d"><div class="num" style="color:#2d7a2d">${total}</div><div class="lbl">Viajes totales</div></div><div class="k"><div class="num" style="color:${rotColor}">${rotacion}</div><div class="lbl">Rotación (v/día)</div></div><div class="k"><div class="num" style="color:#1a4a1a">${dias}</div><div class="lbl">Días del período</div></div><div class="k"><div class="num" style="color:#e8812a">${destOrdenados.length}</div><div class="lbl">Destinos distintos</div></div></div>
   <div class="sec">Destinos visitados</div>
   <table><thead><tr><th>Destino</th><th>Viajes</th><th>% del total</th></tr></thead><tbody>${filas}</tbody></table>
-  <div class="footer">San Miguel Citrus — Interno ${interno} · Generado el ${new Date().toLocaleString('es-AR')}</div>
-  </body></html>`;
+  <div class="footer">San Miguel Citrus — Interno ${interno} · ${new Date().toLocaleString('es-AR')}</div></body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print();},500);
 }
-setPeriodo('semana',document.getElementById('btnSemana'));
+
+function generarPDFDestino(){
+  if(!_resDestino){alert('Consultá primero un destino.');return;}
+  const{destino,desde,hasta,dias,despachos,porInterno,porFecha}=_resDestino;
+  const total=despachos.length;
+  const intOrdenados=Object.entries(porInterno).sort((a,b)=>b[1]-a[1]);
+  const diasActivos=Object.keys(porFecha).length;
+  const filasInt=intOrdenados.map(([int,cant])=>`<tr><td>Interno ${int}</td><td style="text-align:center;font-weight:700;color:#2d7a2d">${cant}</td><td style="text-align:center">${Math.round(cant/total*100)}%</td></tr>`).join('');
+  const filaDias=Object.entries(porFecha).sort((a,b)=>a[0].localeCompare(b[0])).map(([fecha,data])=>`<tr><td>${fecha}</td><td style="text-align:center;font-weight:700;color:#2d7a2d">${data.viajes}</td><td style="font-size:11px;color:#666">${[...new Set(data.internos)].map(i=>`Int.${i}`).join(', ')}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:28px;color:#1a1a1a;max-width:800px;margin:0 auto;}.hdr{background:#1a4a1a;color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}.hdr h1{font-size:20px;letter-spacing:1px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;margin-top:3px;}.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}.k{border-radius:8px;padding:14px;text-align:center;border:1px solid #e0e0e0;}.k .num{font-size:32px;font-weight:900;}.k .lbl{font-size:10px;color:#666;text-transform:uppercase;margin-top:2px;}.sec{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1a4a1a;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #1a4a1a;}table{width:100%;border-collapse:collapse;margin-bottom:16px;}th{background:#1a4a1a;color:#fff;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;}td{padding:8px 10px;border-bottom:1px solid #eee;font-size:12px;}tr:nth-child(even)td{background:#fafafa;}.footer{margin-top:20px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}</style></head><body>
+  <div class="hdr"><div><h1>INFORME DE DESTINO</h1><div class="sub">${destino} — SAN MIGUEL CITRUS</div></div><div style="text-align:right;font-size:12px;opacity:.8">Período: ${desde} al ${hasta}<br>${dias} días</div></div>
+  <div class="kpi"><div class="k" style="background:#f0f8f0;border-color:#2d7a2d"><div class="num" style="color:#2d7a2d">${total}</div><div class="lbl">Viajes totales</div></div><div class="k"><div class="num" style="color:#e8812a">${diasActivos}</div><div class="lbl">Días con actividad</div></div><div class="k"><div class="num" style="color:#1a4a1a">${intOrdenados.length}</div><div class="lbl">Internos distintos</div></div><div class="k"><div class="num" style="color:#4a9aff">${diasActivos>0?(total/diasActivos).toFixed(1):0}</div><div class="lbl">Prom. v/día activo</div></div></div>
+  <div class="sec">Internos por frecuencia</div>
+  <table><thead><tr><th>Interno</th><th>Viajes</th><th>% del total</th></tr></thead><tbody>${filasInt}</tbody></table>
+  <div class="sec">Detalle por día</div>
+  <table><thead><tr><th>Fecha</th><th>Viajes</th><th>Internos</th></tr></thead><tbody>${filaDias}</tbody></table>
+  <div class="footer">San Miguel Citrus — ${destino} · ${new Date().toLocaleString('es-AR')}</div></body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print();},500);
+}
+
+// Init
+setPeriodo('semana',document.getElementById('btnSemana'),'fDesde','fHasta');
+setPeriodo('semana',document.getElementById('btnSemanaD'),'fDesdeD','fHastaD');
 </script>
 </body>
 </html>
