@@ -188,6 +188,11 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
         <textarea id="tnMotivo" placeholder="Motivo del cambio..."></textarea>
         <button class="btn-sm verde" onclick="cambiarIndustria()">Aplicar</button>
       </div>
+      <div class="ind-ctrl" style="margin-top:6px;">
+        <label style="color:var(--n4);">🚛 Camiones previos</label>
+        <input type="number" id="camPrevios" min="0" max="200" placeholder="0" value="0" oninput="calcular()" style="width:68px;background:var(--bg);border:1px solid var(--n3);border-radius:6px;padding:6px 8px;color:var(--n3);font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;outline:none;">
+        <div style="font-size:11px;color:var(--t3);flex:1;">Camiones vacíos disponibles antes de arrancar la molienda — se suman al cálculo</div>
+      </div>
     </div>
     <div id="panelSinMolienda" style="display:none;background:rgba(232,129,42,0.08);border:1px solid var(--n3);border-radius:8px;padding:10px 12px;margin-top:6px;">
       <div style="font-size:11px;color:var(--n4);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Camiones disponibles hoy</div>
@@ -366,7 +371,7 @@ function hoy(){
 }
 function horaAhora(){return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Argentina/Buenos_Aires'});}
 function slug(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
-function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',tieneCorte:false,hCorteInicio:'11:00',hCorteFin:'17:00',sinMolienda:false,plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[],camionesDisponibles:0};}
+function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',tieneCorte:false,hCorteInicio:'11:00',hCorteFin:'17:00',sinMolienda:false,camPrevios:0,plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[],camionesDisponibles:0};}
 let E=(()=>{try{const raw=localStorage.getItem('sm_plan_v3');if(!raw)return estadoBase();const e=JSON.parse(raw);if(e.fecha!==hoy())return estadoBase();return e;}catch(x){return estadoBase();}})();
 function save(){localStorage.setItem('sm_plan_v3',JSON.stringify(E));}
 function editarFecha(){
@@ -424,6 +429,7 @@ function init(){
   actualizarJornadaDisplay();
   renderDestinos('dEmpaques',DESTINOS.empaques);renderDestinos('dFincas3',DESTINOS.fincas3);renderDestinos('dFincasSM',DESTINOS.fincasSM);
   document.getElementById('tnInput').value=E.tn;document.getElementById('hInicio').value=E.hInicio;document.getElementById('hFin').value=E.hFin;
+  if(E.camPrevios>0){const cp=document.getElementById('camPrevios');if(cp)cp.value=E.camPrevios;}
   if(E.tieneCorte){document.getElementById('tieneCorte').checked=true;document.getElementById('cortePanel').style.display='block';document.getElementById('hCorteInicio').value=E.hCorteInicio||'11:00';document.getElementById('hCorteFin').value=E.hCorteFin||'17:00';}
   if(E.sinMolienda){document.getElementById('sinMolienda').checked=true;document.getElementById('panelIndustria').style.display='none';document.getElementById('panelSinMolienda').style.display='block';}
   restaurarPlan();calcular();poblarSelectores();renderEstadoPlan();renderHistDespachos();renderNovedades();renderCierre();
@@ -465,7 +471,11 @@ function calcular(){
   E.hInicio=ini;E.hFin=fin;E.hCorteInicio=ci;E.hCorteFin=cf;
   if(E.sinMolienda){const cam=parseInt(document.getElementById('camSinMolienda')?.value)||0;document.getElementById('tnActual').textContent='—';document.getElementById('hsDisp').textContent='—';document.getElementById('camDisp').textContent=cam||'—';document.getElementById('rDisponibles').textContent=cam||'—';actualizarResumen();save();return;}
   const tn=parseInt(document.getElementById('tnInput').value)||87;
-  const hsTotales=calcHoras(ini,fin);const hsCorte=E.tieneCorte?calcHoras(ci,cf):0;const hs=Math.round((hsTotales-hsCorte)*10)/10;const cam=Math.floor(hs*tn/TN_CAM);
+  const hsTotales=calcHoras(ini,fin);const hsCorte=E.tieneCorte?calcHoras(ci,cf):0;const hs=Math.round((hsTotales-hsCorte)*10)/10;
+  const camMolienda=Math.floor(hs*tn/TN_CAM);
+  const camPrevios=parseInt(document.getElementById('camPrevios')?.value)||0;
+  const cam=camMolienda+camPrevios;
+  E.camPrevios=camPrevios;
   document.getElementById('tnActual').textContent=E.tn;document.getElementById('hsDisp').textContent=`${hs}h`;document.getElementById('camDisp').textContent=cam;document.getElementById('rDisponibles').textContent=cam;
   if(E.tieneCorte){const res=document.getElementById('corteResumen');if(res)res.textContent=`Corte de ${hsCorte}hs descontado → ${hsTotales}hs totales − ${hsCorte}hs corte = ${hs}hs operativas`;}
   actualizarResumen();save();
@@ -586,11 +596,12 @@ function renderCierre(){
 }
 function generarPDFPlan(){
   const dest=Object.keys(E.plan);if(dest.length===0){toast('No hay plan para exportar','err');return;}
-  const hs=calcHorasConCorte();const cam=Math.floor(hs*E.tn/TN_CAM);const total=Object.values(E.plan).reduce((a,v)=>a+v.camiones,0);
+  const hs=calcHorasConCorte();const camMolienda=Math.floor(hs*E.tn/TN_CAM);const cam=camMolienda+(E.camPrevios||0);const total=Object.values(E.plan).reduce((a,v)=>a+v.camiones,0);
   const corteInfo=E.tieneCorte?` (c/corte de ${calcHoras(E.hCorteInicio,E.hCorteFin)}hs)`:'';
   const filas=dest.map(d=>{const p=E.plan[d];return `<tr><td>${d}</td><td style="text-align:center;font-weight:700;font-size:16px;color:#2d7a2d">${p.camiones}</td><td style="text-align:center">${p.desde||'—'}</td><td style="text-align:center">${p.hasta||'—'}</td></tr>`;}).join('');
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:30px;color:#1a1a1a;max-width:800px;margin:0 auto;}.hdr{background:#1a4a1a;color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}.hdr h1{font-size:26px;letter-spacing:3px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;letter-spacing:1px;margin-top:4px;}.hdr .fecha{text-align:right;font-size:13px;opacity:.8;}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}.stat{background:#f5f5f5;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0;}.stat .num{font-size:28px;font-weight:800;color:#e8812a;}.stat .lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}table{width:100%;border-collapse:collapse;}th{background:#1a4a1a;color:#fff;padding:10px 12px;text-align:left;font-size:12px;letter-spacing:1px;text-transform:uppercase;}td{padding:9px 12px;border-bottom:1px solid #eee;font-size:13px;}tr:nth-child(even)td{background:#fafafa;}.footer{margin-top:24px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}</style></head><body>
   <div class="hdr"><div><h1>PLAN DE CARGA</h1><div class="sub">SAN MIGUEL CITRUS — TRANSPORTE INTERNO</div></div><div class="fecha">Jornada: ${E.fecha}<br>Industria: ${E.tn} TN/hora<br>${E.hInicio} → 06:00 (${hs}hs${corteInfo})</div></div>
+  ${(E.camPrevios>0)?`<div style="background:#fff8f0;border:1px solid #e8812a;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;"><strong>Camiones disponibles: ${cam}</strong> = ${camMolienda} de molienda (${hs}hs × ${E.tn}TN/h) + ${E.camPrevios} previos sin molienda</div>`:''}
   <div class="stats"><div class="stat"><div class="num">${cam}</div><div class="lbl">Camiones disponibles</div></div><div class="stat"><div class="num">${total}</div><div class="lbl">Camiones asignados</div></div><div class="stat"><div class="num">${dest.length}</div><div class="lbl">Destinos activos</div></div><div class="stat"><div class="num">${Math.max(0,cam-total)}</div><div class="lbl">Sin asignar</div></div></div>
   <table><thead><tr><th>Destino</th><th>Camiones</th><th>Desde</th><th>Hasta</th></tr></thead><tbody>${filas}</tbody></table>
   <div class="footer">Generado el ${new Date().toLocaleString('es-AR')} — San Miguel Citrus</div></body></html>`;
