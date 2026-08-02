@@ -336,7 +336,8 @@ function escucharDespachosFB(){
 }
 async function guardarPlanFB(){
   try{
-    await db.collection('planes').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,planConfirmado:true,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre??null,actualizado:Date.now()},{merge:true});
+    // SIN merge:true — reemplaza el documento completo para evitar mezcla de datos de otras fechas
+    await db.collection('planes').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,planConfirmado:true,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre??null,actualizado:Date.now()});
     return true;
   }catch(e){console.log('Error guardando plan:',e);return false;}
 }
