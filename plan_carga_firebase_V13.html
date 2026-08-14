@@ -57,9 +57,15 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 
 /* ─── Buscador de destinos (V13) ─── */
 .buscar-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
-.buscador{flex:1;background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:11px 14px;color:var(--t1);font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.buscador{flex:1;width:100%;background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:11px 14px;color:var(--t1);font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
 .buscador:focus{border-color:var(--v4);}
 .buscador::placeholder{color:var(--t3);}
+.buscador.ok{border-color:var(--v3);color:var(--vneon);font-weight:600;}
+.chips-grid{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
+.chip-num{padding:7px 12px;border-radius:8px;border:1px solid var(--borde2);background:var(--bg3);color:var(--t1);font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;cursor:pointer;min-width:46px;transition:all .15s;}
+.chip-num:hover,.chip-num.marcado{background:var(--v2);border-color:var(--v3);color:#fff;}
+.rapido.full{opacity:.4;}
+.rapido b{color:var(--vneon);font-weight:700;}
 .sug-item{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;margin-bottom:4px;cursor:pointer;transition:all .15s;}
 .sug-item:hover,.sug-item.marcado{background:var(--bg4);border-color:var(--v4);}
 .sug-nom{flex:1;font-size:13px;line-height:1.25;}
@@ -268,9 +274,18 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 <div class="view" id="view-despacho">
   <div class="card">
     <div class="ctitle">🚛 Registrar despacho</div>
-    <div class="form-row">
-      <div class="fg"><label>Nº Interno <span class="req">*</span></label><select id="dInterno"><option value="">— Interno —</option></select></div>
-      <div class="fg"><label>Destino <span class="req">*</span></label><select id="dDestino"><option value="">— Destino —</option></select></div>
+    <div class="fg">
+      <label>Nº Interno <span class="req">*</span></label>
+      <input type="text" id="dIntBuscar" class="buscador" placeholder="Escribí el número…" inputmode="numeric" autocomplete="off" oninput="buscarInterno()" onkeydown="teclaInterno(event)">
+      <div class="chips-grid" id="dIntChips"></div>
+      <input type="hidden" id="dInterno">
+    </div>
+    <div class="fg">
+      <label>Destino <span class="req">*</span></label>
+      <input type="text" id="dDestBuscar" class="buscador" placeholder="Buscar destino…" autocomplete="off" oninput="buscarDestDesp()" onkeydown="teclaDestDesp(event)">
+      <div id="dDestSug" style="margin-top:6px;"></div>
+      <div class="rapidos" id="dDestChips" style="margin-top:7px;margin-bottom:0;"></div>
+      <input type="hidden" id="dDestino">
     </div>
     <div class="fg"><label>Observación (opcional)</label><textarea id="dObs" placeholder="Ej: redireccionado por gerencia..."></textarea></div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:rgba(232,129,42,0.08);border:1px solid var(--n3);border-radius:8px;padding:10px 14px;">
@@ -642,9 +657,74 @@ function limpiarPlan(){
   save();toast('Jornada reiniciada');
 }
 function poblarSelectores(){
-  const si=document.getElementById('dInterno');si.innerHTML='<option value="">— Interno —</option>';INTERNOS.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=`Interno ${n}`;si.appendChild(o);});
-  const sd=document.getElementById('dDestino');sd.innerHTML='<option value="">— Destino —</option>';TODOS.forEach(d=>{const o=document.createElement('option');o.value=d;const disp=despachados(d);const plan=E.plan[d];o.textContent=d+(plan?` (${disp}/${plan.camiones})`:'');sd.appendChild(o);});
+  renderChipsPlan();
   const sn=document.getElementById('novDestino');sn.innerHTML='<option value="">— Destino —</option>';TODOS.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;sn.appendChild(o);});
+}
+
+/* ─── Despacho: interno y destino por búsqueda (V13) ─── */
+let _sugInt=[];
+function buscarInterno(){
+  const q=document.getElementById('dIntBuscar').value.trim();
+  const c=document.getElementById('dIntChips');
+  document.getElementById('dIntBuscar').classList.remove('ok');
+  document.getElementById('dInterno').value='';
+  if(!q){_sugInt=[];c.innerHTML='';return;}
+  _sugInt=INTERNOS.filter(n=>String(n).startsWith(q));
+  if(_sugInt.length===0)_sugInt=INTERNOS.filter(n=>String(n).includes(q));
+  _sugInt=_sugInt.slice(0,15);
+  c.innerHTML=_sugInt.length?_sugInt.map((n,i)=>`<button class="chip-num ${i===0?'marcado':''}" onclick="elegirInterno(${n})">${n}</button>`).join(''):'<div style="font-size:12px;color:var(--t3);padding:4px 2px;">No existe ese interno.</div>';
+}
+function teclaInterno(e){
+  if(e.key==='Enter'&&_sugInt.length>0){e.preventDefault();elegirInterno(_sugInt[0]);}
+  else if(e.key==='Escape'){document.getElementById('dIntBuscar').value='';buscarInterno();}
+}
+function elegirInterno(n){
+  document.getElementById('dInterno').value=n;
+  const inp=document.getElementById('dIntBuscar');
+  inp.value='Interno '+n;inp.classList.add('ok');
+  _sugInt=[];document.getElementById('dIntChips').innerHTML='';
+  const dd=document.getElementById('dDestBuscar');if(dd&&!document.getElementById('dDestino').value)dd.focus();
+}
+let _sugDD=[];
+function buscarDestDesp(){
+  const q=norm(document.getElementById('dDestBuscar').value.trim());
+  const c=document.getElementById('dDestSug');
+  document.getElementById('dDestBuscar').classList.remove('ok');
+  document.getElementById('dDestino').value='';
+  if(!q){_sugDD=[];c.innerHTML='';return;}
+  _sugDD=TODOS.filter(n=>norm(n).includes(q)).slice(0,6);
+  if(_sugDD.length===0){c.innerHTML='<div style="font-size:12px;color:var(--t3);padding:6px 2px;">Sin resultados.</div>';return;}
+  c.innerHTML=_sugDD.map((n,i)=>{const p=E.plan[n],disp=despachados(n);return `<div class="sug-item ${i===0?'marcado':''}" onclick="elegirDestDesp('${slug(n)}')"><div class="sug-nom">${n}</div>${p?`<span class="cat-chip sm">${disp}/${p.camiones}</span>`:`<span class="cat-chip emp">fuera de plan</span>`}</div>`;}).join('');
+}
+function teclaDestDesp(e){
+  if(e.key==='Enter'&&_sugDD.length>0){e.preventDefault();elegirDestDesp(slug(_sugDD[0]));}
+  else if(e.key==='Escape'){document.getElementById('dDestBuscar').value='';buscarDestDesp();}
+}
+function elegirDestDesp(sl){
+  const n=MAPSLUG[sl];if(!n)return;
+  document.getElementById('dDestino').value=n;
+  const inp=document.getElementById('dDestBuscar');
+  inp.value=n;inp.classList.add('ok');
+  _sugDD=[];document.getElementById('dDestSug').innerHTML='';
+}
+function renderChipsPlan(){
+  const c=document.getElementById('dDestChips');if(!c)return;
+  const ks=Object.keys(E.plan);
+  if(ks.length===0){c.innerHTML='';return;}
+  c.innerHTML='<span class="rapidos-lbl">Del plan:</span>'+ks.map(n=>{
+    const disp=despachados(n),tot=E.plan[n].camiones;
+    const corto=n.length>20?n.slice(0,18)+'…':n;
+    return `<button class="rapido ${disp>=tot?'full':''}" onclick="elegirDestDesp('${slug(n)}')">${corto} <b>${disp}/${tot}</b></button>`;
+  }).join('');
+}
+function limpiarCamposDespacho(){
+  document.getElementById('dInterno').value='';document.getElementById('dDestino').value='';
+  const i=document.getElementById('dIntBuscar'),d=document.getElementById('dDestBuscar');
+  i.value='';i.classList.remove('ok');d.value='';d.classList.remove('ok');
+  document.getElementById('dIntChips').innerHTML='';document.getElementById('dDestSug').innerHTML='';
+  _sugInt=[];_sugDD=[];
+  document.getElementById('dObs').value='';document.getElementById('dExtraordinario').checked=false;
+  i.focus();
 }
 function despachados(dest){return E.despachos.filter(d=>d.destino===dest).length;}
 async function registrarDespacho(){
@@ -652,7 +732,7 @@ async function registrarDespacho(){
   if(!interno||!destino){toast('Seleccioná interno y destino','err');return;}
   const hora=horaAhora();const _fechaGuardar=E.fecha.replace(/^(\d)\//,'0$1/');
   const d={interno,destino,hora,obs,fecha:_fechaGuardar,extraordinario,_ts:Date.now()};
-  document.getElementById('dInterno').value='';document.getElementById('dDestino').value='';document.getElementById('dObs').value='';document.getElementById('dExtraordinario').checked=false;
+  limpiarCamposDespacho();
   try{await db.collection('despachos').add(d);toast(`🚛 Int.${interno} → ${destino.split(' ').slice(0,2).join(' ')} ✓`);}
   catch(e){E.despachos.push(d);save();poblarSelectores();renderEstadoPlan();renderHistDespachos();renderCierre();toast(`🚛 Int.${interno} → ${destino.split(' ').slice(0,2).join(' ')} ⚠️ guardado local`,'warn');}
 }
@@ -755,7 +835,21 @@ function generarPDFCierre(){
   <div class="footer">Generado el ${new Date().toLocaleString('es-AR')} — San Miguel Citrus</div></body></html>`;
   abrirPDF(html);
 }
+const CSS_IMPRESION=`
+*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
+@page{margin:12mm 10mm;}
+@media print{
+  body{padding:0 !important;max-width:none !important;}
+  thead{display:table-header-group;}
+  tfoot{display:table-footer-group;}
+  tr{page-break-inside:avoid;break-inside:avoid;}
+  table{page-break-inside:auto;}
+  .hdr,.sec{page-break-after:avoid;}
+  .stats,.kpi{page-break-inside:avoid;}
+}
+`;
 function abrirPDF(html,nombre){
+  html=html.replace('</style>',CSS_IMPRESION+'</style>');
   const htmlConBotones=html.replace('</body>',`<div style="position:fixed;bottom:20px;right:20px;display:flex;gap:10px;z-index:999;"><button onclick="window.print()" style="background:#1a4a1a;color:#fff;border:none;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🖨️ Imprimir / Guardar PDF</button><button onclick="descargarHTML()" style="background:#e8812a;color:#fff;border:none;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">💾 Descargar archivo</button></div><script>function descargarHTML(){const blob=new Blob([document.documentElement.outerHTML],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='${nombre||"cierre"}.html';a.click();}window.addEventListener('beforeprint',()=>{document.querySelectorAll('div[style*="position:fixed"]').forEach(el=>el.style.display='none');});window.addEventListener('afterprint',()=>{document.querySelectorAll('div[style*="position:fixed"]').forEach(el=>el.style.display='flex');});<\/script></body>`);
   const w=window.open('','_blank');w.document.write(htmlConBotones);w.document.close();
 }
