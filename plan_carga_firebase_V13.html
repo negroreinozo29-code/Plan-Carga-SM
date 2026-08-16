@@ -328,8 +328,20 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
     <button class="btn-sm" style="background:var(--r2);color:#fff;font-size:11px;padding:5px 10px;" onclick="limpiarIndustria()">🗑️ Limpiar</button>
   </div>
   <div id="cierreIndustriaResumen"></div>
-  <div class="subtitulo" style="margin-top:8px;">Detalle de cambios</div>
+  <div class="subtitulo" style="margin-top:8px;">Detalle de tramos</div>
   <div id="cierreIndustria"></div>
+  <div style="background:var(--bg3);border:1px solid var(--n3);border-radius:10px;padding:12px 14px;margin-top:8px;">
+    <div style="font-size:10px;color:var(--n4);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:9px;">➕ Cargar tramo no registrado</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+      <input type="time" id="mtDesde" class="asig-t" style="width:104px;">
+      <span class="asig-lb">a</span>
+      <input type="time" id="mtHasta" class="asig-t" style="width:104px;">
+      <input type="number" id="mtTn" min="0" max="150" placeholder="TN/h" style="width:74px;background:var(--bg4);border:1px solid var(--v2);border-radius:6px;padding:5px 4px;color:var(--vneon);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-align:center;outline:none;">
+    </div>
+    <input type="text" id="mtMotivo" class="buscador" placeholder="Motivo (ej: baja molienda por lavado)" style="font-size:13px;padding:8px 11px;margin-bottom:8px;">
+    <button class="btn-sm verde" onclick="agregarTramoManual()" style="width:100%;">Agregar tramo</button>
+    <div style="font-size:11px;color:var(--t3);margin-top:7px;line-height:1.4;">Para completar tramos que no se registraron en el momento. Se guardan con las horas reales que indiques.</div>
+  </div>
   <div style="background:var(--bg3);border:1px solid var(--borde2);border-radius:10px;padding:12px 14px;margin-top:8px;margin-bottom:8px;">
     <div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:700;">🚛 Camiones disponibles en la jornada</div>
     <div style="display:flex;align-items:center;gap:12px;">
@@ -447,9 +459,10 @@ function cerrarJornada(){
   if(E.indCierre){toast('La jornada ya fue cerrada a las '+E.indCierre,'warn');return;}
   const camDisp=parseInt(document.getElementById('camionesDisp')?.value)||0;
   if(camDisp===0){toast('Ingresá los camiones disponibles antes de cerrar','err');return;}
+  if(E.indLog.length===0&&!confirm('No registraste ninguna capacidad de Industria en esta jornada.\n\nEl resumen del cierre va a salir vacío. ¿Cerrar igual?'))return;
   E.camionesDisponibles=camDisp;
   const hora=horaAhora();
-  if(E.indLog.length>0) E.indLog[E.indLog.length-1].horaFin=hora;
+  E.indLog.forEach(l=>{if(l.horaFin==='—')l.horaFin=hora;});
   E.indCierre=hora;
   save();renderIndLog();renderCierre();
   document.getElementById('btnCerrar').textContent='✅ Jornada cerrada a las '+hora;
@@ -618,32 +631,99 @@ function setPreset(tipo){
   else{document.getElementById('pcustom').classList.add('on');toast('Ingresá el horario manualmente');}
   calcular();
 }
+/* ══════════════════════════════════════════════════════════════
+   INDUSTRIA — tramos con duración real y promedio ponderado
+   ══════════════════════════════════════════════════════════════ */
+function minJorn(h){
+  if(!h||h==='—')return 0;
+  const[a,b]=h.split(':').map(Number);
+  const[x,y]=(E.hInicio||'00:00').split(':').map(Number);
+  let m=(a*60+b)-(x*60+y);
+  if(m<0)m+=1440;
+  return m;
+}
+function durTramoMin(l){
+  const fin=(l.horaFin&&l.horaFin!=='—')?l.horaFin:(E.indCierre||horaAhora());
+  let d=minJorn(fin)-minJorn(l.horaInicio);
+  if(d<0)d+=1440;
+  return d;
+}
+function hsTexto(min){const h=Math.floor(min/60),m=min%60;return (h?h+'h':'')+(m?(h?' ':'')+m+'m':'')||'0m';}
+function resumenIndustria(){
+  if(!E.indLog||E.indLog.length===0)return null;
+  let totMin=0,tnPorMin=0,cam=0;
+  E.indLog.forEach(l=>{const d=durTramoMin(l);totMin+=d;tnPorMin+=(l.tn||0)*d;cam+=(d/60)*(l.tn||0)/TN_CAM;});
+  return{min:totMin,hs:Math.round(totMin/60*10)/10,prom:totMin>0?Math.round(tnPorMin/totMin):0,cam:Math.floor(cam)};
+}
+function ordenarIndLog(){E.indLog.sort((a,b)=>minJorn(a.horaInicio)-minJorn(b.horaInicio));}
 function cambiarIndustria(){
-  const tn=parseInt(document.getElementById('tnInput').value)||87;const motivo=document.getElementById('tnMotivo').value.trim();
+  const tn=parseInt(document.getElementById('tnInput').value);const motivo=document.getElementById('tnMotivo').value.trim();
+  if(isNaN(tn)){toast('Ingresá la capacidad en TN/hora','err');return;}
   if(tn!==E.tn&&!motivo){toast('Agregá el motivo del cambio','err');return;}
-  const hora=horaAhora();if(E.indLog.length>0)E.indLog[E.indLog.length-1].horaFin=hora;
-  E.indLog.push({horaInicio:hora,horaFin:'—',tn,motivo:motivo||'Inicio jornada'});E.tn=tn;
+  const hora=horaAhora();
+  E.indLog.forEach(l=>{if(l.horaFin==='—')l.horaFin=hora;});
+  E.indLog.push({horaInicio:hora,horaFin:'—',tn,motivo:motivo||'Inicio/reanudación de molienda',_reg:'vivo',_cargadoA:hora});
+  ordenarIndLog();E.tn=tn;
   calcular();renderIndLog();renderCierre();document.getElementById('tnMotivo').value='';toast(`Industria: ${tn} TN/hora`);
+}
+function agregarTramoManual(){
+  const desde=document.getElementById('mtDesde').value,hasta=document.getElementById('mtHasta').value;
+  const tn=parseInt(document.getElementById('mtTn').value);const motivo=document.getElementById('mtMotivo').value.trim();
+  if(!desde||!hasta){toast('Completá desde y hasta','err');return;}
+  if(isNaN(tn)){toast('Ingresá la capacidad en TN/hora','err');return;}
+  if(!motivo){toast('Agregá el motivo del tramo','err');return;}
+  const a=minJorn(desde),b=minJorn(hasta);
+  if(b<=a){toast('El "hasta" debe ser posterior al "desde"','err');return;}
+  const choca=E.indLog.some(l=>{const c=minJorn(l.horaInicio),d=c+durTramoMin(l);return a<d&&b>c;});
+  if(choca&&!confirm('Este tramo se superpone con otro ya registrado. ¿Agregarlo igual?'))return;
+  E.indLog.push({horaInicio:desde,horaFin:hasta,tn,motivo,_reg:'diferido',_cargadoA:horaAhora()});
+  ordenarIndLog();save();
+  document.getElementById('mtDesde').value='';document.getElementById('mtHasta').value='';document.getElementById('mtTn').value='';document.getElementById('mtMotivo').value='';
+  renderIndLog();renderCierre();guardarPlanFB();
+  toast(`✓ Tramo ${desde}→${hasta} a ${tn} TN/h`);
+}
+function editTramo(i,campo,val){
+  if(!E.indLog[i])return;
+  if(campo==='tn'){const n=parseInt(val);if(isNaN(n))return;E.indLog[i].tn=n;}
+  else if(campo==='horaFin'){E.indLog[i].horaFin=val||'—';}
+  else if(campo==='horaInicio'){if(!val)return;E.indLog[i].horaInicio=val;ordenarIndLog();}
+  else if(campo==='motivo'){E.indLog[i].motivo=val;}
+  save();renderIndLog();renderCierre();guardarPlanFB();
+}
+function borrarTramo(i){
+  const l=E.indLog[i];if(!l)return;
+  if(!confirm(`¿Borrar el tramo ${l.horaInicio} → ${l.horaFin} de ${l.tn} TN/h?`))return;
+  E.indLog.splice(i,1);save();renderIndLog();renderCierre();guardarPlanFB();toast('Tramo eliminado');
 }
 function renderIndLog(){
   const c=document.getElementById('cierreIndustria'),r=document.getElementById('cierreIndustriaResumen');
   if(!c)return;
-  if(E.indLog.length===0){if(r)r.innerHTML='<div class="empty"><div class="ic">🏭</div>Sin registros de Industria en esta jornada.</div>';c.innerHTML='';return;}
-  const valores=E.indLog.map(l=>l.tn);const promTN=Math.round(valores.reduce((a,b)=>a+b,0)/valores.length);
-  const hs=calcHoras(E.hInicio,E.indCierre||horaAhora());const camReales=Math.floor((hs*promTN)/38);
-  const camPlan=parseInt(document.getElementById('camDisp').textContent)||0;const diff=camReales-camPlan;
-  const diffColor=diff>=0?'var(--vneon)':diff>=-3?'var(--n3)':'var(--r3)';const sinVariaciones=E.indLog.length===1&&E.indLog[0].tn===87;
+  if(E.indLog.length===0){if(r)r.innerHTML='<div class="empty"><div class="ic">🏭</div>Sin registros de Industria en esta jornada.<br>Aplicá la capacidad o cargá un tramo abajo.</div>';c.innerHTML='';return;}
+  const R=resumenIndustria();
+  const camPlan=parseInt(document.getElementById('camDisp').textContent)||0;const diff=R.cam-camPlan;
+  const diffColor=diff>=0?'var(--vneon)':diff>=-3?'var(--n3)':'var(--r3)';
+  const sinVariaciones=E.indLog.length===1&&E.indLog[0].tn===87;
   if(r){
-    if(sinVariaciones){r.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--v2);border-radius:10px;padding:14px;text-align:center;margin-bottom:8px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;color:var(--vneon);">✅ Sin variaciones — Industria operó a 87 TN/hora toda la jornada</div><div style="font-size:11px;color:var(--t2);margin-top:6px;">${camPlan} camiones disponibles según plan inicial</div></div>`;}
-    else{r.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--v2);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"><div style="text-align:center;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--n3);line-height:1">${promTN}</div><div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px">TN/hora promedio real</div></div><div style="text-align:center;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--vneon);line-height:1">${camReales}</div><div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px">Camiones reales disponibles</div></div><div style="text-align:center;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:${diffColor};line-height:1">${diff>0?'+':''}${diff}</div><div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px">Desvío vs plan inicial</div></div></div>${E.indCierre?`<div style="font-size:11px;color:var(--t2);text-align:center;margin-top:10px;">Jornada cerrada a las ${E.indCierre}</div>`:'<div style="font-size:11px;color:var(--n3);text-align:center;margin-top:10px;">⚠️ Jornada aún abierta</div>'}</div>`;}
+    if(sinVariaciones){r.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--v2);border-radius:10px;padding:14px;text-align:center;margin-bottom:8px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;color:var(--vneon);">✅ Sin variaciones — Industria operó a 87 TN/hora toda la jornada</div><div style="font-size:11px;color:var(--t2);margin-top:6px;">${R.cam} camiones según ${R.hs}hs registradas</div></div>`;}
+    else{r.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--v2);border-radius:10px;padding:14px;margin-bottom:8px;"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"><div style="text-align:center;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--n3);line-height:1">${R.prom}</div><div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px">TN/hora promedio real</div></div><div style="text-align:center;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:var(--vneon);line-height:1">${R.cam}</div><div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px">Camiones reales disponibles</div></div><div style="text-align:center;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:${diffColor};line-height:1">${diff>0?'+':''}${diff}</div><div style="font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px">Desvío vs plan inicial</div></div></div><div style="font-size:11px;color:var(--t2);text-align:center;margin-top:10px;">${R.hs}hs registradas · promedio ponderado por duración${E.indCierre?` · cerrada ${E.indCierre}`:''}</div>${E.indCierre?'':'<div style="font-size:11px;color:var(--n3);text-align:center;margin-top:4px;">⚠️ Jornada aún abierta</div>'}</div>`;}
   }
-  c.innerHTML=[...E.indLog].reverse().map(l=>`<div class="il-item"><div class="il-hora">${l.horaInicio} → ${l.horaFin}</div><div class="il-tn ${l.tn>=70?'ok':l.tn>=50?'alerta':'critico'}">${l.tn}TN</div><div class="il-mot">${l.motivo}</div></div>`).join('');
+  c.innerHTML=E.indLog.map((l,i)=>{
+    const d=durTramoMin(l),abierto=(!l.horaFin||l.horaFin==='—');
+    return `<div class="il-item" style="flex-wrap:wrap;gap:7px;">
+      <input type="time" value="${l.horaInicio}" onchange="editTramo(${i},'horaInicio',this.value)" class="asig-t" style="width:98px;">
+      <span class="asig-lb">a</span>
+      <input type="time" value="${abierto?'':l.horaFin}" onchange="editTramo(${i},'horaFin',this.value)" class="asig-t" style="width:98px;">
+      <input type="number" value="${l.tn}" min="0" max="150" onchange="editTramo(${i},'tn',this.value)" style="width:58px;background:var(--bg4);border:1px solid var(--v2);border-radius:6px;padding:4px 2px;color:var(--vneon);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-align:center;outline:none;">
+      <span class="asig-lb">TN/h</span>
+      <span style="font-size:11px;color:var(--t2);min-width:52px;">${hsTexto(d)}</span>
+      <span class="il-mot" style="min-width:120px;">${l.motivo}${abierto?' <span style="color:var(--n3);">· en curso</span>':''}${l._reg==='diferido'?' <span style="color:var(--t3);font-size:10px;">· diferido</span>':''}</span>
+      <button class="asig-del" onclick="borrarTramo(${i})" title="Borrar tramo">✕</button>
+    </div>`;}).join('');
 }
 function confirmarPlan(){
   const total=Object.values(E.plan).reduce((a,v)=>a+(v.camiones||0),0);
   if(total===0){toast('Asigná al menos un destino','err');return;}
   E.planConfirmado=true;
-  if(E.indLog.length===0)E.indLog.push({horaInicio:horaAhora(),horaFin:'—',tn:E.tn,motivo:'Inicio jornada'});
   save();poblarSelectores();renderEstadoPlan();renderCierre();guardarPlanFB();enviarPlanSheets();
   toast('✅ Plan confirmado');setTimeout(()=>goTab('despacho'),1200);
 }
@@ -817,14 +897,12 @@ function generarPDFCierre(){
   // ── SECCIÓN INDUSTRIA — usa calcHorasConCorte() para descontar corte ──
   const indHTML=(()=>{
     if(E.indLog.length===0) return '';
+    const R=resumenIndustria();
     const sinVar=E.indLog.length===1&&E.indLog[0].tn===87;
-    const hs=calcHorasConCorte();
-    const valores=E.indLog.map(l=>l.tn);
-    const prom=Math.round(valores.reduce((a,b)=>a+b,0)/valores.length);
-    const cams=Math.floor((hs*prom)/38);
-    const indDetalle=E.indLog.map(l=>`<tr><td>${l.horaInicio}</td><td>${l.horaFin}</td><td style="color:#2d7a2d;font-weight:700">${l.tn} TN/hora</td><td>${l.motivo}</td></tr>`).join('');
-    if(sinVar) return `<div class="sec">Industria — Resumen de jornada</div><div style="background:#f0f8f0;border-radius:8px;padding:14px;text-align:center;margin-bottom:16px;border:1px solid #2d7a2d"><div style="font-size:16px;font-weight:700;color:#2d7a2d">✅ Sin variaciones — Industria operó a 87 TN/hora toda la jornada</div><div style="font-size:12px;color:#666;margin-top:4px">${cams} camiones disponibles según plan inicial</div></div><table><thead><tr><th>Inicio</th><th>Fin</th><th>Capacidad</th><th>Motivo</th></tr></thead><tbody>${indDetalle}</tbody></table>`;
-    return `<div class="sec">Industria — Resumen de jornada</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;"><div style="background:#f5f5f5;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0"><div style="font-size:26px;font-weight:900;color:#e8812a">${prom}</div><div style="font-size:10px;color:#666;text-transform:uppercase">TN/hora promedio real</div></div><div style="background:#f0f8f0;border-radius:8px;padding:12px;text-align:center;border:1px solid #2d7a2d"><div style="font-size:26px;font-weight:900;color:#2d7a2d">${cams}</div><div style="font-size:10px;color:#666;text-transform:uppercase">Camiones reales disponibles</div></div><div style="background:#f5f5f5;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0"><div style="font-size:26px;font-weight:900;color:#1a4a1a">${hs}h</div><div style="font-size:10px;color:#666;text-transform:uppercase">Horas operativas</div></div></div><table><thead><tr><th>Inicio</th><th>Fin</th><th>Capacidad</th><th>Motivo</th></tr></thead><tbody>${indDetalle}</tbody></table>`;
+    const indDetalle=E.indLog.map(l=>`<tr><td>${l.horaInicio}</td><td>${l.horaFin}</td><td style="text-align:center">${hsTexto(durTramoMin(l))}</td><td style="color:#2d7a2d;font-weight:700">${l.tn} TN/hora</td><td>${l.motivo}</td></tr>`).join('');
+    const tabla=`<table><thead><tr><th>Inicio</th><th>Fin</th><th>Duración</th><th>Capacidad</th><th>Motivo</th></tr></thead><tbody>${indDetalle}</tbody></table>`;
+    if(sinVar) return `<div class="sec">Industria — Resumen de jornada</div><div style="background:#f0f8f0;border-radius:8px;padding:14px;text-align:center;margin-bottom:16px;border:1px solid #2d7a2d"><div style="font-size:16px;font-weight:700;color:#2d7a2d">✅ Sin variaciones — Industria operó a 87 TN/hora toda la jornada</div><div style="font-size:12px;color:#666;margin-top:4px">${R.cam} camiones disponibles según ${R.hs}hs registradas</div></div>${tabla}`;
+    return `<div class="sec">Industria — Resumen de jornada</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;"><div style="background:#f5f5f5;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0"><div style="font-size:26px;font-weight:900;color:#e8812a">${R.prom}</div><div style="font-size:10px;color:#666;text-transform:uppercase">TN/hora promedio ponderado</div></div><div style="background:#f0f8f0;border-radius:8px;padding:12px;text-align:center;border:1px solid #2d7a2d"><div style="font-size:26px;font-weight:900;color:#2d7a2d">${R.cam}</div><div style="font-size:10px;color:#666;text-transform:uppercase">Camiones reales disponibles</div></div><div style="background:#f5f5f5;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0"><div style="font-size:26px;font-weight:900;color:#1a4a1a">${R.hs}h</div><div style="font-size:10px;color:#666;text-transform:uppercase">Horas registradas</div></div></div><div style="font-size:11px;color:#888;margin-bottom:12px;">El promedio pondera cada tramo según su duración real.</div>${tabla}`;
   })();
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:30px;color:#1a1a1a;max-width:900px;margin:0 auto;}.hdr{background:#1a4a1a;color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}.hdr h1{font-size:26px;letter-spacing:3px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;letter-spacing:1px;margin-top:4px;}.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}.kpi-box{border-radius:10px;padding:16px;text-align:center;border:1px solid #e0e0e0;}.kpi-num{font-size:36px;font-weight:900;}.kpi-lbl{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.8px;margin-top:4px;}table{width:100%;border-collapse:collapse;margin-bottom:20px;}th{background:#1a4a1a;color:#fff;padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.8px;text-transform:uppercase;}td{padding:8px 10px;border-bottom:1px solid #eee;font-size:12px;}tr:nth-child(even)td{background:#fafafa;}.sec{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1a4a1a;margin:20px 0 8px;padding-bottom:4px;border-bottom:2px solid #1a4a1a;}.footer{margin-top:24px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}</style></head><body>
   <div class="hdr"><div><h1>CIERRE DE JORNADA</h1><div class="sub">SAN MIGUEL CITRUS — TRANSPORTE INTERNO</div></div><div style="text-align:right;font-size:13px;opacity:.8">Jornada: ${E.fecha}<br>Generado: ${horaAhora()}</div></div>
