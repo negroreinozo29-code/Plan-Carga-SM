@@ -208,10 +208,12 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
     <div id="panelIndustria">
       <div class="ind-ctrl">
         <label>Capacidad Industria</label>
-        <input type="number" id="tnInput" value="87" min="1" max="87">
+        <input type="number" id="tnInput" value="87" min="0" max="87" oninput="calcular()">
         <textarea id="tnMotivo" placeholder="Motivo del cambio..."></textarea>
         <button class="btn-sm verde" onclick="cambiarIndustria()">Aplicar</button>
       </div>
+      <div style="font-size:11px;color:var(--t3);padding:2px 4px 0;line-height:1.45;">El número de arriba se recalcula solo para planificar. <b style="color:var(--t2);">Aplicar</b> registra el tramo real con la hora actual — usalo cuando la molienda arranca o cambia.</div>
+      <div id="estadoInd" style="font-size:11px;padding:6px 4px 0;"></div>
       <div class="ind-ctrl" style="margin-top:6px;">
         <label style="color:var(--n4);">🚛 Camiones previos</label>
         <input type="number" id="camPrevios" min="0" max="200" placeholder="0" value="0" oninput="calcular()" style="width:68px;background:var(--bg);border:1px solid var(--n3);border-radius:6px;padding:6px 8px;color:var(--n3);font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-align:center;outline:none;">
@@ -605,15 +607,25 @@ function calcular(){
   const ci=document.getElementById('hCorteInicio')?.value||'11:00',cf=document.getElementById('hCorteFin')?.value||'17:00';
   E.hInicio=ini;E.hFin=fin;E.hCorteInicio=ci;E.hCorteFin=cf;
   if(E.sinMolienda){const cam=parseInt(document.getElementById('camSinMolienda')?.value)||0;document.getElementById('tnActual').textContent='—';document.getElementById('hsDisp').textContent='—';document.getElementById('camDisp').textContent=cam||'—';document.getElementById('rDisponibles').textContent=cam||'—';actualizarResumen();save();return;}
-  const tn=parseInt(document.getElementById('tnInput').value)||87;
+  const tnRaw=parseInt(document.getElementById('tnInput').value);
+  const tn=isNaN(tnRaw)?87:tnRaw;
+  E.tn=tn;
   const hsTotales=calcHoras(ini,fin);const hsCorte=E.tieneCorte?calcHoras(ci,cf):0;const hs=Math.round((hsTotales-hsCorte)*10)/10;
   const camMolienda=Math.floor(hs*tn/TN_CAM);
   const camPrevios=parseInt(document.getElementById('camPrevios')?.value)||0;
   const cam=camMolienda+camPrevios;
   E.camPrevios=camPrevios;
-  document.getElementById('tnActual').textContent=E.tn;document.getElementById('hsDisp').textContent=`${hs}h`;document.getElementById('camDisp').textContent=cam;document.getElementById('rDisponibles').textContent=cam;
+  document.getElementById('tnActual').textContent=tn;document.getElementById('hsDisp').textContent=`${hs}h`;document.getElementById('camDisp').textContent=cam;document.getElementById('rDisponibles').textContent=cam;
+  renderEstadoInd();
   if(E.tieneCorte){const res=document.getElementById('corteResumen');if(res)res.textContent=`Corte de ${hsCorte}hs descontado → ${hsTotales}hs totales − ${hsCorte}hs corte = ${hs}hs operativas`;}
   actualizarResumen();save();
+}
+function renderEstadoInd(){
+  const el=document.getElementById('estadoInd');if(!el)return;
+  if(!E.indLog||E.indLog.length===0){el.innerHTML='<span style="color:var(--n3);">◇ Molienda sin registrar — el número de arriba es una estimación</span>';return;}
+  const abierto=E.indLog.find(l=>l.horaFin==='—');
+  if(abierto){el.innerHTML=`<span style="color:var(--vneon);">● Registrando ${abierto.tn} TN/h desde las ${abierto.horaInicio}</span>`;}
+  else{const u=E.indLog[E.indLog.length-1];el.innerHTML=`<span style="color:var(--t2);">◇ Último tramo cerrado: ${u.horaInicio} → ${u.horaFin} a ${u.tn} TN/h</span>`;}
 }
 function actualizarResumen(){
   const total=Object.values(E.plan).reduce((a,v)=>a+(v.camiones||0),0);
@@ -659,12 +671,13 @@ function ordenarIndLog(){E.indLog.sort((a,b)=>minJorn(a.horaInicio)-minJorn(b.ho
 function cambiarIndustria(){
   const tn=parseInt(document.getElementById('tnInput').value);const motivo=document.getElementById('tnMotivo').value.trim();
   if(isNaN(tn)){toast('Ingresá la capacidad en TN/hora','err');return;}
-  if(tn!==E.tn&&!motivo){toast('Agregá el motivo del cambio','err');return;}
+  const ultimo=E.indLog.length?E.indLog[E.indLog.length-1]:null;
+  if(ultimo&&ultimo.tn!==tn&&!motivo){toast('Agregá el motivo del cambio','err');return;}
   const hora=horaAhora();
   E.indLog.forEach(l=>{if(l.horaFin==='—')l.horaFin=hora;});
   E.indLog.push({horaInicio:hora,horaFin:'—',tn,motivo:motivo||'Inicio/reanudación de molienda',_reg:'vivo',_cargadoA:hora});
   ordenarIndLog();E.tn=tn;
-  calcular();renderIndLog();renderCierre();document.getElementById('tnMotivo').value='';toast(`Industria: ${tn} TN/hora`);
+  calcular();renderIndLog();renderCierre();guardarPlanFB();document.getElementById('tnMotivo').value='';toast(`✓ Registrado: ${tn} TN/h desde ${hora}`);
 }
 function agregarTramoManual(){
   const desde=document.getElementById('mtDesde').value,hasta=document.getElementById('mtHasta').value;
@@ -696,6 +709,7 @@ function borrarTramo(i){
   E.indLog.splice(i,1);save();renderIndLog();renderCierre();guardarPlanFB();toast('Tramo eliminado');
 }
 function renderIndLog(){
+  renderEstadoInd();
   const c=document.getElementById('cierreIndustria'),r=document.getElementById('cierreIndustriaResumen');
   if(!c)return;
   if(E.indLog.length===0){if(r)r.innerHTML='<div class="empty"><div class="ic">🏭</div>Sin registros de Industria en esta jornada.<br>Aplicá la capacidad o cargá un tramo abajo.</div>';c.innerHTML='';return;}
