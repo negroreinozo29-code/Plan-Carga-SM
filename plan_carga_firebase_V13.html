@@ -24,6 +24,15 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .jornada-chip{background:rgba(232,129,42,.12);border:1px solid var(--n3);border-radius:8px;padding:6px 14px;text-align:right;}
 .jornada-chip .lbl{font-size:9px;color:var(--n4);letter-spacing:1px;text-transform:uppercase;}
 .jornada-chip .val{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--n3);letter-spacing:1px;}
+.jornada-chip.alerta{background:rgba(192,48,48,.18);border-color:var(--r3);animation:pulso 1.6s ease-in-out infinite;}
+.jornada-chip.alerta .lbl{color:#f3a0a0;}
+.jornada-chip.alerta .val{color:#ff8a8a;}
+@keyframes pulso{0%,100%{opacity:1;}50%{opacity:.55;}}
+.aviso{border-radius:10px;padding:11px 14px;margin-bottom:12px;font-size:13px;line-height:1.45;display:flex;align-items:center;gap:10px;}
+.aviso.rojo{background:rgba(192,48,48,.13);border:1px solid var(--r3);color:#ffb3b3;}
+.aviso.naranja{background:rgba(232,129,42,.12);border:1px solid var(--n3);color:var(--n4);}
+.aviso .ic{font-size:20px;flex-shrink:0;}
+.aviso b{color:#fff;}
 .tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--borde2);}
 .tab{flex:1;padding:11px 6px;text-align:center;font-size:11px;font-weight:600;color:var(--t3);cursor:pointer;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid transparent;transition:all .2s;}
 .tab.on{color:var(--n3);border-bottom-color:var(--n3);background:rgba(232,129,42,.05);}
@@ -193,6 +202,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
   <div class="tab" onclick="goTab('cierre')">📊 Cierre</div>
 </div>
 <div class="view on" id="view-plan">
+  <div id="avisoJornada"></div>
   <div class="ind-panel">
     <div class="ind-row">
       <div class="ind-stat"><div class="ind-num" id="tnActual">87</div><div class="ind-lbl">TN/hora</div></div>
@@ -405,7 +415,7 @@ async function cargarPlanFB(){
       document.getElementById('hInicio').value=E.hInicio;
       document.getElementById('hFin').value=E.hFin;
       if(E.tieneCorte){document.getElementById('tieneCorte').checked=true;document.getElementById('cortePanel').style.display='block';document.getElementById('hCorteInicio').value=E.hCorteInicio;document.getElementById('hCorteFin').value=E.hCorteFin;}
-      renderPlanRows();calcular();renderEstadoPlan();renderNovedades();renderCierre();renderIndLog();
+      renderPlanRows();calcular();renderEstadoPlan();renderNovedades();renderCierre();renderIndLog();actualizarJornadaDisplay();
       toast('✓ Plan cargado desde Firebase');
     }
   }catch(e){console.log('Error cargando plan:',e);}
@@ -442,8 +452,27 @@ function actualizarJornadaDisplay(){
   if(parts.length===3){
     const d=new Date(`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}T12:00:00`);
     const dias=['DOM','LUN','MAR','MIE','JUE','VIE','SAB'];
-    document.getElementById('jornadaVal').textContent=`${dias[d.getDay()]} ${parts[0]}/${parts[1]} → 06:00`;
+    const esHoy=(E.fecha===hoy());
+    const chip=document.querySelector('.jornada-chip');
+    document.getElementById('jornadaVal').textContent=esHoy?`${dias[d.getDay()]} ${parts[0]}/${parts[1]} → 06:00`:`⚠️ ${dias[d.getDay()]} ${parts[0]}/${parts[1]}`;
+    if(chip)chip.classList.toggle('alerta',!esHoy);
   }
+  renderAvisoJornada();
+}
+function renderAvisoJornada(){
+  const el=document.getElementById('avisoJornada');if(!el)return;
+  const esHoy=(E.fecha===hoy());
+  let html='';
+  if(!esHoy){
+    const cual=(()=>{const p=E.fecha.split('/'),q=hoy().split('/');
+      const a=new Date(+p[2],+p[1]-1,+p[0]),b=new Date(+q[2],+q[1]-1,+q[0]);
+      return a<b?'una jornada ANTERIOR':'una jornada FUTURA';})();
+    html+=`<div class="aviso rojo"><span class="ic">⚠️</span><div>Estás trabajando sobre <b>${cual}: ${E.fecha}</b>. La jornada de hoy es el ${hoy()}. Cambiá la fecha arriba antes de editar.</div></div>`;
+  }
+  if(E.indCierre){
+    html+=`<div class="aviso naranja"><span class="ic">🔒</span><div>Esta jornada ya fue <b>cerrada a las ${E.indCierre}</b>. Si la modificás, cambiás datos ya informados.</div></div>`;
+  }
+  el.innerHTML=html;
 }
 function limpiarDespachos(){if(E.despachos.length===0){toast('No hay despachos para limpiar','warn');return;}if(!confirm(`¿Limpiar todos los despachos (${E.despachos.length})?`))return;E.despachos=[];save();poblarSelectores();renderEstadoPlan();renderHistDespachos();renderCierre();toast('Despachos limpiados');}
 function limpiarIndustria(){if(E.indLog.length===0){toast('No hay registro de Industria','warn');return;}if(!confirm('¿Limpiar todo el registro de Industria?'))return;E.indLog=[];save();renderIndLog();renderCierre();toast('Registro de Industria limpiado');}
@@ -466,7 +495,7 @@ function cerrarJornada(){
   const hora=horaAhora();
   E.indLog.forEach(l=>{if(l.horaFin==='—')l.horaFin=hora;});
   E.indCierre=hora;
-  save();renderIndLog();renderCierre();
+  save();renderIndLog();renderCierre();renderAvisoJornada();
   document.getElementById('btnCerrar').textContent='✅ Jornada cerrada a las '+hora;
   document.getElementById('btnCerrar').disabled=true;
   toast('Jornada cerrada a las '+hora);
@@ -737,6 +766,9 @@ function renderIndLog(){
 function confirmarPlan(){
   const total=Object.values(E.plan).reduce((a,v)=>a+(v.camiones||0),0);
   if(total===0){toast('Asigná al menos un destino','err');return;}
+  if(E.fecha!==hoy()&&!confirm(`⚠️ ATENCIÓN\n\nEstás por confirmar el plan de la jornada ${E.fecha}, que NO es la de hoy (${hoy()}).\n\n¿Es correcto?`))return;
+  if(E.indCierre&&!confirm(`🔒 Esta jornada ya fue CERRADA a las ${E.indCierre}.\n\nSi confirmás, sobrescribís un plan ya informado a gerencia.\n\n¿Continuar?`))return;
+  else if(E.planConfirmado&&!E.indCierre&&!confirm(`El plan del ${E.fecha} ya fue confirmado y enviado por correo.\n\nSi continuás, la versión guardada se reemplaza por la actual y el cierre va a comparar contra esta.\n\n¿Sobrescribir?`))return;
   E.planConfirmado=true;
   save();poblarSelectores();renderEstadoPlan();renderCierre();guardarPlanFB();enviarPlanSheets();
   toast('✅ Plan confirmado');setTimeout(()=>goTab('despacho'),1200);
