@@ -37,6 +37,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .btn.naranja{background:var(--n3);color:#fff;}
 .upd{font-size:11px;color:var(--t3);margin-left:8px;font-style:italic;}
 .main{padding:16px 24px;max-width:1400px;margin:0 auto;}
+.aviso{background:rgba(232,129,42,.12);border:1px solid var(--n3);border-radius:10px;padding:11px 16px;margin-bottom:14px;font-size:12px;color:var(--n4);line-height:1.5;}
+.aviso b{color:#fff;}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
 .kpi-card{background:var(--bg2);border:1px solid var(--borde2);border-radius:14px;padding:18px 16px;text-align:center;position:relative;overflow:hidden;}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
@@ -150,6 +152,7 @@ function dateToKeyAlt(d){ return `${d.getDate()}-${d.getMonth()+1}-${d.getFullYe
 function dateToFecha(d){ return `${String(d.getDate()).padStart(2,'0')}/${d.getMonth()+1}/${d.getFullYear()}`; }
 function dateToFechaAlt(d){ return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`; }
 function dateToLabel(d){ return `${DIAS_SEMANA[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`; }
+function sumaCamiones(plan){ return Object.values(plan||{}).reduce((a,v)=>a+(v.camiones||0),0); }
 
 let _datos = [];
 let _autoRefresh = null;
@@ -179,9 +182,37 @@ async function cargar(){
     snap1.forEach(d=>{ despachosMap[d.id]=d.data(); });
     snap2.forEach(d=>{ despachosMap[d.id]=d.data(); });
     const despachos = Object.values(despachosMap);
-    const fuente = cierreDoc.exists ? cierreDoc.data() : (planDoc.exists ? planDoc.data() : null);
+
+    // ── El plan VIGENTE manda. El cierre se usa solo como respaldo. ──
+    // El doc de 'planes' se reescribe completo en cada confirmación y también
+    // al cerrar la jornada, así que siempre es igual o más nuevo que 'cierres'.
+    const planData   = planDoc.exists   ? planDoc.data()   : null;
+    const cierreData = cierreDoc.exists ? cierreDoc.data() : null;
+    const fuente = planData || cierreData;
+
+    // Si ambos existen y no coinciden, lo marcamos para avisar en pantalla.
+    let discrepancia = null;
+    if(planData && cierreData){
+      const cp = sumaCamiones(planData.plan), cc = sumaCamiones(cierreData.plan);
+      const dp = Object.keys(planData.plan||{}).length, dc = Object.keys(cierreData.plan||{}).length;
+      if(cp!==cc || dp!==dc) discrepancia = { label:f.label, planCam:cp, planDest:dp, cierreCam:cc, cierreDest:dc };
+    }
+
+    // Los camiones disponibles reales se cargan al cerrar: si están, tienen prioridad.
+    const baseCam = (cierreData && cierreData.camionesDisponibles)
+      ? { ...(fuente||{}), camionesDisponibles: cierreData.camionesDisponibles }
+      : fuente;
+
     if(fuente || despachos.length>0){
-      datos.push({ ...f, plan: fuente?.plan||{}, novedades: fuente?.novedades||[], despachos, camDisp: calcCamDisp(fuente), tieneCierre: cierreDoc.exists });
+      datos.push({
+        ...f,
+        plan: fuente?.plan||{},
+        novedades: fuente?.novedades||[],
+        despachos,
+        camDisp: calcCamDisp(baseCam),
+        tieneCierre: !!cierreData,
+        discrepancia
+      });
     }
   }
   _datos = datos;
@@ -199,7 +230,8 @@ function calcCamDisp(fuente){
     if(val > 0) return val;
   }
   if(!fuente) return 49;
-  const tn=fuente.tn||87, ini=fuente.hInicio||'10:00', fin=fuente.hFin||'06:00';
+  const tn = (fuente.tn===0 || fuente.tn) ? fuente.tn : 87;
+  const ini=fuente.hInicio||'10:00', fin=fuente.hFin||'06:00';
   const [hi,mi]=ini.split(':').map(Number), [hf,mf]=fin.split(':').map(Number);
   let i=hi*60+mi, f=hf*60+mf;
   if(f<=i) f+=1440;
@@ -223,7 +255,7 @@ function contarNovedades(datos, tipo){
 function render(datos){
   if(datos.length===0){ document.getElementById('main').innerHTML='<div class="empty">🔍 No hay datos para ese período.</div>'; return; }
 
-  const totalPlan = datos.reduce((a,d)=>a+Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0),0);
+  const totalPlan = datos.reduce((a,d)=>a+sumaCamiones(d.plan),0);
   const totalEjec = datos.reduce((a,d)=>a+d.despachos.length,0);
   const totalExtra = datos.reduce((a,d)=>a+d.despachos.filter(x=>x.extraordinario).length,0);
   const totalPlanEjec = totalEjec - totalExtra;
@@ -240,7 +272,7 @@ function render(datos){
   // Desvíos solo de jornadas CERRADAS
   const totalDesvios = datos.reduce((a,d)=>{
     if(!d.tieneCierre) return a;
-    const plan=Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0);
+    const plan=sumaCamiones(d.plan);
     const ejec=d.despachos.filter(x=>!x.extraordinario).length;
     return a+Math.max(0,plan-ejec);
   },0);
@@ -251,7 +283,10 @@ function render(datos){
   const pctTransp = totalDesvios>0?Math.round(novTransp/totalDesvios*100):0;
   const pctSinJust = totalDesvios>0?Math.round(sinJust/totalDesvios*100):0;
 
-  let html = `
+  const discrepancias = datos.filter(d=>d.discrepancia).map(d=>d.discrepancia);
+  const avisoHTML = discrepancias.length>0 ? `<div class="aviso">⚠️ <b>El plan guardado no coincide con el respaldo del cierre</b> en ${discrepancias.length} jornada${discrepancias.length>1?'s':''}: ${discrepancias.map(x=>`<b>${x.label}</b> — plan vigente ${x.planCam} cam. en ${x.planDest} destinos vs. cierre ${x.cierreCam} cam. en ${x.cierreDest}`).join(' · ')}. El tablero usa el <b>plan vigente</b>. Suele pasar cuando la jornada se cerró antes de terminar de cargar el plan.</div>` : '';
+
+  let html = avisoHTML + `
   <div class="kpi-grid">
     <div class="kpi-card verde"><div class="kpi-num">${pctOp}%</div><div class="kpi-lbl">Cumplimiento operativo</div><div class="kpi-sub">${totalEjec} de ${totalPlan} camiones</div></div>
     <div class="kpi-card naranja"><div class="kpi-num">${pctPlan}%</div><div class="kpi-lbl">Cumplimiento del plan</div><div class="kpi-sub">${totalPlanEjec} al destino planificado</div></div>
@@ -272,7 +307,7 @@ function render(datos){
         <thead><tr><th>Día</th><th>Plan</th><th>Ejec.</th><th>% Op</th><th>% Plan</th><th>Estado</th></tr></thead>
         <tbody>
         ${datos.map(d=>{
-          const plan=Object.values(d.plan).reduce((a,v)=>a+(v.camiones||0),0);
+          const plan=sumaCamiones(d.plan);
           const ejec=d.despachos.length;
           const extra=d.despachos.filter(x=>x.extraordinario).length;
           const pOp=plan>0?Math.round(ejec/plan*100):0;
@@ -281,7 +316,7 @@ function render(datos){
           const estadoLabel=cerrada?(pOp>=90?'✅ OK':pOp>=70?'⚠️ Parc.':'❌ Bajo'):'⏳ En curso';
           const estadoColor=cerrada?(pOp>=90?'var(--vneon)':pOp>=70?'var(--n3)':'var(--r3)'):'var(--t2)';
           return `<tr>
-            <td style="font-weight:600">${d.label}</td>
+            <td style="font-weight:600">${d.label}${d.discrepancia?' <span title="El plan guardado no coincide con el respaldo del cierre" style="color:var(--n3)">⚠️</span>':''}</td>
             <td>${plan}</td>
             <td style="font-weight:700">${ejec}</td>
             <td style="color:var(--vneon);font-weight:700">${pOp}%</td>
@@ -402,7 +437,7 @@ function render(datos){
 function generarPDF(){
   if(_datos.length===0){alert('Consultá primero un período.');return;}
   const desde=document.getElementById('fDesde').value, hasta=document.getElementById('fHasta').value;
-  const totalPlan=_datos.reduce((a,d)=>a+Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0),0);
+  const totalPlan=_datos.reduce((a,d)=>a+sumaCamiones(d.plan),0);
   const totalEjec=_datos.reduce((a,d)=>a+d.despachos.length,0);
   const totalExtra=_datos.reduce((a,d)=>a+d.despachos.filter(x=>x.extraordinario).length,0);
   const pctOp=totalPlan>0?Math.round(totalEjec/totalPlan*100):0;
@@ -414,7 +449,7 @@ function generarPDF(){
   const pctUtil=totalCamDisp>0?Math.round(totalEjec/totalCamDisp*100):0;
   const totalDesvios=_datos.reduce((a,d)=>{
     if(!d.tieneCierre) return a;
-    const plan=Object.values(d.plan).reduce((s,v)=>s+(v.camiones||0),0);
+    const plan=sumaCamiones(d.plan);
     const ejec=d.despachos.filter(x=>!x.extraordinario).length;
     return a+Math.max(0,plan-ejec);
   },0);
@@ -423,7 +458,7 @@ function generarPDF(){
   const pctCampo=totalDesvios>0?Math.round(novCampo/totalDesvios*100):0;
   const pctTransp=totalDesvios>0?Math.round(novTransp/totalDesvios*100):0;
   const filasDias=_datos.map(d=>{
-    const plan=Object.values(d.plan).reduce((a,v)=>a+(v.camiones||0),0);
+    const plan=sumaCamiones(d.plan);
     const ejec=d.despachos.length, extra=d.despachos.filter(x=>x.extraordinario).length;
     const pOp=plan>0?Math.round(ejec/plan*100):0;
     const pPlan=plan>0?Math.round((ejec-extra)/plan*100):0;
@@ -437,6 +472,9 @@ function generarPDF(){
       <td style="text-align:center;font-weight:700;color:${color}">${estado}</td></tr>`;
   }).join('');
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+    @page{margin:12mm 10mm;}
+    @media print{ body{padding:0 !important;max-width:none !important;} thead{display:table-header-group;} tr{page-break-inside:avoid;} .hdr,.sec{page-break-after:avoid;} .kpi,.kpi2{page-break-inside:avoid;} }
     body{font-family:Arial,sans-serif;padding:28px;color:#1a1a1a;max-width:1000px;margin:0 auto;}
     .hdr{background:#1a4a1a;color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
     .hdr h1{font-size:22px;letter-spacing:2px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;margin-top:3px;}
