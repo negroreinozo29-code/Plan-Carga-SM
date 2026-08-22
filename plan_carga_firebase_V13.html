@@ -488,6 +488,10 @@ function generarPDFDespachos(){
 }
 function cerrarJornada(){
   if(E.indCierre){toast('La jornada ya fue cerrada a las '+E.indCierre,'warn');return;}
+  const destPlan=Object.keys(E.plan).length;
+  if(destPlan===0){toast('No hay plan cargado — no se puede cerrar la jornada','err');return;}
+  if(!E.planConfirmado&&!confirm('El plan de esta jornada nunca se confirmó.\n\nSi cerrás igual, el respaldo va a guardar el plan tal como está ahora.\n\n¿Continuar?'))return;
+  if(E.fecha!==hoy()&&!confirm(`⚠️ Estás por cerrar la jornada ${E.fecha}, que NO es la de hoy (${hoy()}).\n\n¿Es correcto?`))return;
   const camDisp=parseInt(document.getElementById('camionesDisp')?.value)||0;
   if(camDisp===0){toast('Ingresá los camiones disponibles antes de cerrar','err');return;}
   if(E.indLog.length===0&&!confirm('No registraste ninguna capacidad de Industria en esta jornada.\n\nEl resumen del cierre va a salir vacío. ¿Cerrar igual?'))return;
@@ -500,7 +504,9 @@ function cerrarJornada(){
   document.getElementById('btnCerrar').disabled=true;
   toast('Jornada cerrada a las '+hora);
   guardarPlanFB();
-  db.collection('cierres').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,despachos:E.despachos,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre,cerrado:Date.now(),camionesDisponibles:E.camionesDisponibles||0},{merge:true}).then(()=>{toast('💾 Respaldo permanente del cierre guardado');}).catch(()=>{});
+  // SIN merge:true — reemplaza el documento completo. Con merge, los campos de un
+  // cierre anterior quedaban pegados y el respaldo mezclaba dos versiones del plan.
+  db.collection('cierres').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,despachos:E.despachos,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre,cerrado:Date.now(),camionesDisponibles:E.camionesDisponibles||0}).then(()=>{toast('💾 Respaldo permanente del cierre guardado');}).catch(()=>{});
 }
 function init(){
   actualizarJornadaDisplay();
