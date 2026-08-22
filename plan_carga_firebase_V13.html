@@ -410,7 +410,7 @@ async function cargarPlanFB(){
       E.tieneCorte=data.tieneCorte??false;E.hCorteInicio=data.hCorteInicio??'11:00';E.hCorteFin=data.hCorteFin??'17:00';
       E.plan=data.plan;E.planConfirmado=data.planConfirmado??true;
       E.novedades=data.novedades??E.novedades;E.indLog=data.indLog??E.indLog;E.indCierre=data.indCierre??E.indCierre;
-      save();
+      normalizarIndLog();save();
       document.getElementById('tnInput').value=E.tn;
       document.getElementById('hInicio').value=E.hInicio;
       document.getElementById('hFin').value=E.hFin;
@@ -426,7 +426,37 @@ function hoy(){
   const fecha=horaAR<6?new Date(ahora.getTime()-86400000):ahora;
   return `${String(fecha.getDate()).padStart(2,'0')}/${fecha.getMonth()+1}/${fecha.getFullYear()}`;
 }
-function horaAhora(){return new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Argentina/Buenos_Aires'});}
+function horaAhora(){
+  try{
+    const p=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Argentina/Buenos_Aires',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+    const h=p.find(x=>x.type==='hour').value,m=p.find(x=>x.type==='minute').value;
+    return String(parseInt(h)%24).padStart(2,'0')+':'+m.padStart(2,'0');
+  }catch(e){
+    const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+}
+function normHora(h){
+  if(!h||h==='—')return h;
+  const s=String(h).trim().toLowerCase().replace(/[\s.]/g,'');
+  const m=s.match(/^(\d{1,2}):(\d{2})(am|pm)?/);
+  if(!m)return h;
+  let hh=parseInt(m[1]);const mm=m[2];
+  if(m[3]==='pm'&&hh<12)hh+=12;
+  if(m[3]==='am'&&hh===12)hh=0;
+  return String(hh%24).padStart(2,'0')+':'+mm;
+}
+function normalizarIndLog(){
+  if(!E.indLog)return false;
+  let cambio=false;
+  E.indLog.forEach(l=>{
+    const a=normHora(l.horaInicio),b=normHora(l.horaFin);
+    if(a!==l.horaInicio){l.horaInicio=a;cambio=true;}
+    if(b!==l.horaFin){l.horaFin=b;cambio=true;}
+  });
+  if(E.indCierre){const c=normHora(E.indCierre);if(c!==E.indCierre){E.indCierre=c;cambio=true;}}
+  if(cambio)save();
+  return cambio;
+}
 function slug(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
 function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',tieneCorte:false,hCorteInicio:'11:00',hCorteFin:'17:00',sinMolienda:false,camPrevios:0,plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[],camionesDisponibles:0};}
 let E=(()=>{try{const raw=localStorage.getItem('sm_plan_v3');if(!raw)return estadoBase();const e=JSON.parse(raw);if(e.fecha!==hoy())return estadoBase();return e;}catch(x){return estadoBase();}})();
@@ -514,6 +544,7 @@ function init(){
   if(E.camPrevios>0){const cp=document.getElementById('camPrevios');if(cp)cp.value=E.camPrevios;}
   if(E.tieneCorte){document.getElementById('tieneCorte').checked=true;document.getElementById('cortePanel').style.display='block';document.getElementById('hCorteInicio').value=E.hCorteInicio||'11:00';document.getElementById('hCorteFin').value=E.hCorteFin||'17:00';}
   if(E.sinMolienda){document.getElementById('sinMolienda').checked=true;document.getElementById('panelIndustria').style.display='none';document.getElementById('panelSinMolienda').style.display='block';}
+  normalizarIndLog();
   renderPlanRows();calcular();poblarSelectores();renderEstadoPlan();renderHistDespachos();renderNovedades();renderCierre();
   escucharDespachosFB();setTimeout(cargarPlanFB,2000);
 }
@@ -683,6 +714,7 @@ function setPreset(tipo){
    ══════════════════════════════════════════════════════════════ */
 function minJorn(h){
   if(!h||h==='—')return 0;
+  h=normHora(h);
   const[a,b]=h.split(':').map(Number);
   const[x,y]=(E.hInicio||'00:00').split(':').map(Number);
   let m=(a*60+b)-(x*60+y);
@@ -759,9 +791,9 @@ function renderIndLog(){
   c.innerHTML=E.indLog.map((l,i)=>{
     const d=durTramoMin(l),abierto=(!l.horaFin||l.horaFin==='—');
     return `<div class="il-item" style="flex-wrap:wrap;gap:7px;">
-      <input type="time" value="${l.horaInicio}" onchange="editTramo(${i},'horaInicio',this.value)" class="asig-t" style="width:98px;">
+      <input type="time" value="${normHora(l.horaInicio)}" onchange="editTramo(${i},'horaInicio',this.value)" class="asig-t" style="width:98px;">
       <span class="asig-lb">a</span>
-      <input type="time" value="${abierto?'':l.horaFin}" onchange="editTramo(${i},'horaFin',this.value)" class="asig-t" style="width:98px;">
+      <input type="time" value="${abierto?'':normHora(l.horaFin)}" onchange="editTramo(${i},'horaFin',this.value)" class="asig-t" style="width:98px;">
       <input type="number" value="${l.tn}" min="0" max="150" onchange="editTramo(${i},'tn',this.value)" style="width:58px;background:var(--bg4);border:1px solid var(--v2);border-radius:6px;padding:4px 2px;color:var(--vneon);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-align:center;outline:none;">
       <span class="asig-lb">TN/h</span>
       <span style="font-size:11px;color:var(--t2);min-width:52px;">${hsTexto(d)}</span>
