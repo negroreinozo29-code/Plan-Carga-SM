@@ -132,6 +132,15 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .ep-prog.parcial{color:var(--n3);}
 .ep-prog.sin{color:var(--t3);}
 .ep-pct{font-size:10px;color:var(--t2);text-align:right;}
+.int-fila{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:9px;padding-top:9px;border-top:1px solid var(--borde2);}
+.int-chip{display:inline-flex;align-items:baseline;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--vneon);background:rgba(45,122,45,.22);border-radius:7px;padding:3px 9px;line-height:1.1;}
+.int-chip i{font-family:'Barlow',sans-serif;font-size:10px;font-weight:400;font-style:normal;color:var(--t2);}
+.int-chip.extra{color:var(--n4);background:rgba(232,129,42,.18);}
+.int-chip.extra::after{content:'⚠';font-size:10px;margin-left:1px;}
+.int-vacio{font-size:11px;color:var(--t3);font-style:italic;}
+.int-faltan{font-size:11px;color:var(--n3);font-weight:600;margin-left:2px;}
+.dest-info{margin-top:7px;background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:8px 11px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+.dest-info .lb{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-right:2px;}
 .di{background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:10px 12px;margin-bottom:7px;}
 .di-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
 .di-int{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;}
@@ -297,6 +306,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
       <input type="text" id="dDestBuscar" class="buscador" placeholder="Buscar destino…" autocomplete="off" oninput="buscarDestDesp()" onkeydown="teclaDestDesp(event)">
       <div id="dDestSug" style="margin-top:6px;"></div>
       <div class="rapidos" id="dDestChips" style="margin-top:7px;margin-bottom:0;"></div>
+      <div class="dest-info" id="dDestInfo" style="display:none"></div>
       <input type="hidden" id="dDestino">
     </div>
     <div class="fg"><label>Observación (opcional)</label><textarea id="dObs" placeholder="Ej: redireccionado por gerencia..."></textarea></div>
@@ -752,8 +762,12 @@ function agregarTramoManual(){
   if(!desde||!hasta){toast('Completá desde y hasta','err');return;}
   if(isNaN(tn)){toast('Ingresá la capacidad en TN/hora','err');return;}
   if(!motivo){toast('Agregá el motivo del tramo','err');return;}
-  const a=minJorn(desde),b=minJorn(hasta);
-  if(b<=a){toast('El "hasta" debe ser posterior al "desde"','err');return;}
+  const a=minJorn(desde);
+  let dur=minJorn(hasta)-a;if(dur<0)dur+=1440;
+  if(dur===0){toast('El "hasta" no puede ser igual al "desde"','err');return;}
+  const largoJornada=calcHoras(E.hInicio,E.hFin)*60;
+  if(a>=largoJornada&&!confirm(`El tramo ${desde} → ${hasta} arranca fuera del horario de la jornada (${E.hInicio} → ${E.hFin}).\n\nRevisá el horario de la jornada si no es lo que esperabas.\n\n¿Agregarlo igual?`))return;
+  const b=a+dur;
   const choca=E.indLog.some(l=>{const c=minJorn(l.horaInicio),d=c+durTramoMin(l);return a<d&&b>c;});
   if(choca&&!confirm('Este tramo se superpone con otro ya registrado. ¿Agregarlo igual?'))return;
   E.indLog.push({horaInicio:desde,horaFin:hasta,tn,motivo,_reg:'diferido',_cargadoA:horaAhora()});
@@ -855,6 +869,7 @@ function buscarDestDesp(){
   const c=document.getElementById('dDestSug');
   document.getElementById('dDestBuscar').classList.remove('ok');
   document.getElementById('dDestino').value='';
+  renderInfoDestino();
   if(!q){_sugDD=[];c.innerHTML='';return;}
   _sugDD=TODOS.filter(n=>norm(n).includes(q)).slice(0,6);
   if(_sugDD.length===0){c.innerHTML='<div style="font-size:12px;color:var(--t3);padding:6px 2px;">Sin resultados.</div>';return;}
@@ -870,8 +885,26 @@ function elegirDestDesp(sl){
   const inp=document.getElementById('dDestBuscar');
   inp.value=n;inp.classList.add('ok');
   _sugDD=[];document.getElementById('dDestSug').innerHTML='';
+  renderInfoDestino();
+}
+function renderInfoDestino(){
+  const c=document.getElementById('dDestInfo');if(!c)return;
+  const n=document.getElementById('dDestino').value;
+  if(!n){c.innerHTML='';c.style.display='none';return;}
+  c.style.display='flex';
+  const lista=E.despachos.filter(x=>x.destino===n).sort((a,b)=>(a._ts||0)-(b._ts||0));
+  const p=E.plan[n];
+  const faltan=p?Math.max(0,p.camiones-lista.length):0;
+  const chips=lista.length
+    ? lista.map(x=>`<span class="int-chip${x.extraordinario?' extra':''}">${x.interno}<i>${x.hora}</i></span>`).join('')
+    : '<span class="int-vacio">Todavía no se despachó ninguno acá</span>';
+  const cierre=p
+    ? (faltan>0?`<span class="int-faltan">faltan ${faltan} de ${p.camiones}</span>`:'<span style="font-size:11px;color:var(--vneon);font-weight:600;">✓ destino completo</span>')
+    : '<span style="font-size:11px;color:var(--n3);font-weight:600;">no está en el plan</span>';
+  c.innerHTML=`<span class="lb">Ya despachados</span>${chips}${cierre}`;
 }
 function renderChipsPlan(){
+  renderInfoDestino();
   const c=document.getElementById('dDestChips');if(!c)return;
   const ks=Object.keys(E.plan);
   if(ks.length===0){c.innerHTML='';return;}
@@ -886,7 +919,7 @@ function limpiarCamposDespacho(){
   const i=document.getElementById('dIntBuscar'),d=document.getElementById('dDestBuscar');
   i.value='';i.classList.remove('ok');d.value='';d.classList.remove('ok');
   document.getElementById('dIntChips').innerHTML='';document.getElementById('dDestSug').innerHTML='';
-  _sugInt=[];_sugDD=[];
+  _sugInt=[];_sugDD=[];renderInfoDestino();
   document.getElementById('dObs').value='';document.getElementById('dExtraordinario').checked=false;
   i.focus();
 }
@@ -905,7 +938,23 @@ function renderEstadoPlan(){
   const c=document.getElementById('estadoPlan'),dest=Object.keys(E.plan);
   const destFueraPlan=E.despachos.filter(d=>d.extraordinario).map(d=>d.destino).filter((v,i,a)=>a.indexOf(v)===i);
   if(dest.length===0&&destFueraPlan.length===0){c.innerHTML='<div class="empty"><div class="ic">📋</div>Confirmá el plan primero.</div>';return;}
-  const htmlPlan=dest.map(d=>{const p=E.plan[d],disp=despachados(d);const pct=p.camiones>0?Math.round(disp/p.camiones*100):0;const cls=disp>=p.camiones?'ok':disp>0?'parcial':'sin';return `<div class="ep-item ${cls}"><div><div class="ep-nombre">${d}</div><div class="ep-horario">${p.desde||'—'} → ${p.hasta||'—'}</div></div><div style="text-align:right"><div class="ep-prog ${cls}">${disp}/${p.camiones}</div><div class="ep-pct">${pct}%</div></div></div>`;}).join('');
+  const htmlPlan=dest.map(d=>{
+    const p=E.plan[d],disp=despachados(d);
+    const pct=p.camiones>0?Math.round(disp/p.camiones*100):0;
+    const cls=disp>=p.camiones?'ok':disp>0?'parcial':'sin';
+    const faltan=Math.max(0,p.camiones-disp);
+    const lista=E.despachos.filter(x=>x.destino===d).sort((a,b)=>(a._ts||0)-(b._ts||0));
+    const chips=lista.length
+      ? lista.map(x=>`<span class="int-chip${x.extraordinario?' extra':''}"${x.extraordinario?' title="Despacho extraordinario"':''}>${x.interno}<i>${x.hora}</i></span>`).join('')
+      : '<span class="int-vacio">Sin despachos todavía</span>';
+    return `<div class="ep-item ${cls}" style="display:block;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div><div class="ep-nombre">${d}</div><div class="ep-horario">${p.desde||'—'} → ${p.hasta||'—'}</div></div>
+        <div style="text-align:right"><div class="ep-prog ${cls}">${disp}/${p.camiones}</div><div class="ep-pct">${pct}%</div></div>
+      </div>
+      <div class="int-fila">${chips}${faltan>0?`<span class="int-faltan">faltan ${faltan}</span>`:''}</div>
+    </div>`;
+  }).join('');
   const htmlExtra=destFueraPlan.length>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--n3);padding:10px 0 4px;text-transform:uppercase;">⚠️ Fuera del plan</div>${destFueraPlan.map(d=>{const disp=despachados(d);return `<div class="ep-item" style="border-left:3px solid var(--n3);background:rgba(232,129,42,0.06);"><div><div class="ep-nombre">${d}</div><div class="ep-horario" style="color:var(--n3);">No estaba en el plan</div></div><div style="text-align:right"><div class="ep-prog" style="color:var(--n3);">${disp}/0</div><div class="ep-pct" style="color:var(--n3);">⚠️ Fuera plan</div></div></div>`;}).join('')}`:'';
   c.innerHTML=htmlPlan+htmlExtra;
 }
