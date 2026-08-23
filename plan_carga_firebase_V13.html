@@ -185,6 +185,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .toast.on{transform:translateX(-50%) translateY(0);}
 .toast.err{background:var(--r2);}
 .toast.warn{background:var(--n2);}
+.editado{font-size:10px;font-weight:400;color:var(--t3);font-style:italic;text-transform:none;letter-spacing:0;cursor:help;}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:900;display:flex;align-items:center;justify-content:center;padding:18px;}
 .modal{background:var(--bg2);border:1px solid var(--n3);border-radius:14px;padding:18px;max-width:420px;width:100%;}
 .modal-t{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;letter-spacing:1px;color:var(--n3);text-transform:uppercase;margin-bottom:12px;line-height:1.2;}
@@ -376,10 +377,11 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
     <div style="font-size:11px;color:var(--t3);margin-top:7px;line-height:1.4;">Para completar tramos que no se registraron en el momento. Se guardan con las horas reales que indiques.</div>
   </div>
   <div style="background:var(--bg3);border:1px solid var(--borde2);border-radius:10px;padding:12px 14px;margin-top:8px;margin-bottom:8px;">
-    <div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:700;">🚛 Camiones disponibles en la jornada</div>
-    <div style="display:flex;align-items:center;gap:12px;">
+    <div style="font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:700;">🚛 Camiones disponibles en la jornada <span id="camEditado"></span></div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <input type="number" id="camionesDisp" min="1" max="100" placeholder="Ej: 49" style="width:80px;background:var(--bg);border:1px solid var(--v3);border-radius:6px;padding:8px 10px;color:var(--vneon);font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;text-align:center;outline:none;">
-      <div style="font-size:11px;color:var(--t3);">Ingresá la cantidad real de camiones disponibles hoy</div>
+      <button class="btn-sm verde" id="btnCorregirCam" onclick="corregirCamiones()" style="display:none;">💾 Guardar corrección</button>
+      <div style="font-size:11px;color:var(--t3);flex:1;min-width:140px;" id="camAyuda">Ingresá la cantidad real de camiones disponibles hoy</div>
     </div>
   </div>
   <button class="btn verde" onclick="cerrarJornada()" style="margin-top:8px;" id="btnCerrar">🔒 Cerrar jornada</button>
@@ -415,7 +417,7 @@ function escucharDespachosFB(){
 async function guardarPlanFB(){
   try{
     // SIN merge:true — reemplaza el documento completo para evitar mezcla de datos de otras fechas
-    await db.collection('planes').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,planConfirmado:true,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre??null,actualizado:Date.now()});
+    await db.collection('planes').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,planConfirmado:true,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre??null,camionesDisponibles:E.camionesDisponibles||0,camEdit:E.camEdit??null,actualizado:Date.now()});
     return true;
   }catch(e){console.log('Error guardando plan:',e);return false;}
 }
@@ -431,6 +433,7 @@ async function cargarPlanFB(){
       E.tieneCorte=data.tieneCorte??false;E.hCorteInicio=data.hCorteInicio??'11:00';E.hCorteFin=data.hCorteFin??'17:00';
       E.plan=data.plan;E.planConfirmado=data.planConfirmado??true;
       E.novedades=data.novedades??E.novedades;E.indLog=data.indLog??E.indLog;E.indCierre=data.indCierre??E.indCierre;
+      E.camionesDisponibles=data.camionesDisponibles??E.camionesDisponibles;E.camEdit=data.camEdit??null;
       normalizarIndLog();save();
       document.getElementById('tnInput').value=E.tn;
       document.getElementById('hInicio').value=E.hInicio;
@@ -479,7 +482,7 @@ function normalizarIndLog(){
   return cambio;
 }
 function slug(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
-function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',tieneCorte:false,hCorteInicio:'11:00',hCorteFin:'17:00',sinMolienda:false,camPrevios:0,plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[],camionesDisponibles:0};}
+function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',tieneCorte:false,hCorteInicio:'11:00',hCorteFin:'17:00',sinMolienda:false,camPrevios:0,plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[],camionesDisponibles:0,camEdit:null};}
 let E=(()=>{try{const raw=localStorage.getItem('sm_plan_v3');if(!raw)return estadoBase();const e=JSON.parse(raw);if(e.fecha!==hoy())return estadoBase();return e;}catch(x){return estadoBase();}})();
 function save(){localStorage.setItem('sm_plan_v3',JSON.stringify(E));}
 function editarFecha(){
@@ -493,7 +496,9 @@ function cambiarFecha(val){
   const[y,m,d]=val.split('-');
   E.fecha=`${d.padStart(2,'0')}/${parseInt(m)}/${y}`;
   E.plan={};E.despachos=[];E.novedades=[];E.indLog=[];E.indCierre=null;E.planConfirmado=false;
-  save();actualizarJornadaDisplay();ocultarFecha();renderPlanRows();
+  E.camionesDisponibles=0;E.camEdit=null;
+  const _ci=document.getElementById('camionesDisp');if(_ci)_ci.value='';
+  save();actualizarJornadaDisplay();ocultarFecha();renderPlanRows();renderPanelCamiones();
   toast(`Jornada: ${E.fecha} — cargando datos...`);
   escucharDespachosFB();setTimeout(cargarPlanFB,1500);
 }
@@ -557,7 +562,7 @@ function cerrarJornada(){
   guardarPlanFB();
   // SIN merge:true — reemplaza el documento completo. Con merge, los campos de un
   // cierre anterior quedaban pegados y el respaldo mezclaba dos versiones del plan.
-  db.collection('cierres').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,despachos:E.despachos,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre,cerrado:Date.now(),camionesDisponibles:E.camionesDisponibles||0}).then(()=>{toast('💾 Respaldo permanente del cierre guardado');}).catch(()=>{});
+  db.collection('cierres').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,despachos:E.despachos,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre,cerrado:Date.now(),camionesDisponibles:E.camionesDisponibles||0,camEdit:E.camEdit??null}).then(()=>{toast('💾 Respaldo permanente del cierre guardado');}).catch(()=>{});
 }
 function init(){
   actualizarJornadaDisplay();
@@ -706,6 +711,42 @@ function calcular(){
   renderEstadoInd();
   if(E.tieneCorte){const res=document.getElementById('corteResumen');if(res)res.textContent=`Corte de ${hsCorte}hs descontado → ${hsTotales}hs totales − ${hsCorte}hs corte = ${hs}hs operativas`;}
   actualizarResumen();save();
+}
+function renderPanelCamiones(){
+  const inp=document.getElementById('camionesDisp'),btn=document.getElementById('btnCorregirCam');
+  const marca=document.getElementById('camEditado'),ayuda=document.getElementById('camAyuda');
+  if(!inp)return;
+  if(E.camionesDisponibles>0&&document.activeElement!==inp) inp.value=E.camionesDisponibles;
+  const cerrada=!!E.indCierre;
+  if(btn) btn.style.display=cerrada?'inline-block':'none';
+  if(ayuda) ayuda.textContent=cerrada
+    ? 'Jornada cerrada. Podés corregir este número si se cargó mal.'
+    : 'Ingresá la cantidad real de camiones disponibles hoy';
+  if(marca){
+    const e=E.camEdit;
+    marca.innerHTML=e?`<span class="editado" title="Antes: ${e.antes} · corregido el ${e.cuando}">· editado</span>`:'';
+  }
+}
+async function corregirCamiones(){
+  const inp=document.getElementById('camionesDisp');
+  const nuevo=parseInt(inp.value)||0;
+  const actual=E.camionesDisponibles||0;
+  if(nuevo<=0){toast('Ingresá un número válido','err');return;}
+  if(nuevo===actual){toast('Es el mismo número que ya estaba','warn');return;}
+  const seguir=await modalConfirm({
+    titulo:'Corregir camiones disponibles',
+    html:`<div class="modal-cmp"><div><span>Jornada</span><span>${E.fecha}</span></div><div><span>Valor guardado</span><span>${actual}</span></div><div><span>Valor corregido</span><span>${nuevo}</span></div></div>Esta jornada ya fue cerrada${E.indCierre?' a las '+E.indCierre:''} y el dato pudo haberse informado. La corrección queda marcada como <b>editado</b> dentro de la app.`,
+    ok:'Cancelar', alt:'Corregir'
+  });
+  if(!seguir){inp.value=actual;return;}
+  E.camEdit={antes:actual,cuando:`${E.fecha} ${horaAhora()}`,ts:Date.now()};
+  E.camionesDisponibles=nuevo;
+  save();renderPanelCamiones();renderCierre();
+  try{
+    await db.collection('cierres').doc(fechaKey()).set({camionesDisponibles:nuevo,camEdit:E.camEdit},{merge:true});
+    await guardarPlanFB();
+    toast(`✓ Corregido: ${actual} → ${nuevo} camiones`);
+  }catch(e){toast('Se guardó local, pero falló el envío a Firebase','warn');}
 }
 function renderEstadoInd(){
   const el=document.getElementById('estadoInd');if(!el)return;
@@ -862,6 +903,8 @@ async function enviarPlanSheets(){const hs=calcHorasConCorte();for(const d of Ob
 function limpiarPlan(){
   if(!confirm('¿Limpiar todo el plan y reiniciar la jornada?'))return;
   E.plan={};E.planConfirmado=false;E.despachos=[];E.novedades=[];E.indLog=[];E.indCierre=null;
+  E.camionesDisponibles=0;E.camEdit=null;
+  const _ci=document.getElementById('camionesDisp');if(_ci)_ci.value='';
   renderPlanRows();
   renderEstadoPlan();renderHistDespachos();renderNovedades();renderCierre();
   const btn=document.getElementById('btnCerrar');if(btn){btn.textContent='🔒 Cerrar jornada';btn.disabled=false;}
@@ -1037,6 +1080,7 @@ function renderNovedades(){
   c.innerHTML=E.novedades.map((n,i)=>n.resuelta?'':`<div class="nov-item ${n.tipo}"><div class="nov-h"><span class="nov-tipo ${n.tipo}">${n.tipo==='campo'?'🌿 Campo':'🚛 Transporte'}</span><span class="nov-hora">${n.hora}</span></div><div class="nov-dest">${n.destino}</div><div class="nov-desc">${n.desc}</div><span class="nov-res-btn" onclick="resolverNovedad(${i})">✓ Marcar como resuelta</span></div>`).join('');
 }
 function renderCierre(){
+  renderPanelCamiones();
   const dest=Object.keys(E.plan);const totalPlan=Object.values(E.plan).reduce((a,v)=>a+v.camiones,0);const totalEjec=E.despachos.length;const totalExtra=E.despachos.filter(d=>d.extraordinario).length;const totalPlanEjec=totalEjec-totalExtra;
   const pctPlan=totalPlan>0?Math.round(totalPlanEjec/totalPlan*100):0;const pctOp=totalPlan>0?Math.round(totalEjec/totalPlan*100):0;
   document.getElementById('cPlan').textContent=totalPlan||'—';document.getElementById('cEjec').textContent=totalEjec||'—';document.getElementById('cPct').textContent=totalPlan>0?`${pctOp}% op / ${pctPlan}% plan`:'—';
