@@ -133,7 +133,9 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .ep-prog.sin{color:var(--t3);}
 .ep-pct{font-size:10px;color:var(--t2);text-align:right;}
 .int-fila{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:9px;padding-top:9px;border-top:1px solid var(--borde2);}
-.int-chip{display:inline-flex;align-items:baseline;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--vneon);background:rgba(45,122,45,.22);border-radius:7px;padding:3px 9px;line-height:1.1;}
+.int-chip{cursor:pointer;transition:all .15s;display:inline-flex;align-items:baseline;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--vneon);background:rgba(45,122,45,.22);border-radius:7px;padding:3px 9px;line-height:1.1;}
+.int-chip:hover{background:var(--r2);color:#fff;}
+.int-chip:hover i{color:rgba(255,255,255,.75);}
 .int-chip i{font-family:'Barlow',sans-serif;font-size:10px;font-weight:400;font-style:normal;color:var(--t2);}
 .int-chip.extra{color:var(--n4);background:rgba(232,129,42,.18);}
 .int-chip.extra::after{content:'⚠';font-size:10px;margin-left:1px;}
@@ -183,6 +185,16 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
 .toast.on{transform:translateX(-50%) translateY(0);}
 .toast.err{background:var(--r2);}
 .toast.warn{background:var(--n2);}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:900;display:flex;align-items:center;justify-content:center;padding:18px;}
+.modal{background:var(--bg2);border:1px solid var(--n3);border-radius:14px;padding:18px;max-width:420px;width:100%;}
+.modal-t{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;letter-spacing:1px;color:var(--n3);text-transform:uppercase;margin-bottom:12px;line-height:1.2;}
+.modal-b{font-size:13px;color:var(--t2);line-height:1.55;}
+.modal-b b{color:var(--t1);}
+.modal-cmp{background:var(--bg3);border:1px solid var(--borde2);border-radius:8px;padding:10px 12px;margin:10px 0;}
+.modal-cmp div{display:flex;justify-content:space-between;gap:10px;padding:3px 0;}
+.modal-cmp span:last-child{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--t1);}
+.modal-btns{display:flex;gap:8px;margin-top:16px;}
+.modal-btns .btn{margin:0;}
 .empty{text-align:center;padding:28px 16px;color:var(--t3);font-size:13px;}
 .empty .ic{font-size:32px;margin-bottom:8px;}
 .subtitulo{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--t3);text-transform:uppercase;padding:8px 0 6px;margin-top:4px;}
@@ -330,11 +342,10 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t1);min-he
   <div class="subtitulo">Estado del plan</div>
   <div id="estadoPlan"></div>
   <div style="display:flex;gap:8px;margin-bottom:4px;align-items:center;">
-    <div class="subtitulo" style="flex:1;margin:0;padding:8px 0 4px;">Despachos del día</div>
+    <button class="btn-sm" id="btnHist" onclick="toggleHist()" style="flex:1;background:var(--bg3);border:1px solid var(--borde2);color:var(--t2);text-align:left;font-size:12px;">▸ Ver todos los despachos</button>
     <button class="btn-sm verde" onclick="generarPDFDespachos()" style="font-size:11px;padding:5px 10px;">📄 PDF</button>
-
   </div>
-  <div id="histDespachos"></div>
+  <div id="histDespachos" style="display:none;"></div>
   <div class="subtitulo">Novedades activas</div>
   <div id="listNovedades"></div>
 </div>
@@ -756,7 +767,23 @@ function cambiarIndustria(){
   ordenarIndLog();E.tn=tn;
   calcular();renderIndLog();renderCierre();guardarPlanFB();document.getElementById('tnMotivo').value='';toast(`✓ Registrado: ${tn} TN/h desde ${hora}`);
 }
-function agregarTramoManual(){
+function modalConfirm({titulo,html,ok='Revisar',alt='Agregar igual'}){
+  return new Promise(res=>{
+    const w=document.createElement('div');w.className='modal-bg';
+    w.innerHTML=`<div class="modal"><div class="modal-t">${titulo}</div><div class="modal-b">${html}</div><div class="modal-btns"><button class="btn verde" id="mOk">${ok}</button><button class="btn outline" id="mAlt">${alt}</button></div></div>`;
+    document.body.appendChild(w);
+    const fin=v=>{w.remove();res(v);};
+    w.querySelector('#mOk').onclick=()=>fin(false);
+    w.querySelector('#mAlt').onclick=()=>fin(true);
+    w.onclick=e=>{if(e.target===w)fin(false);};
+    setTimeout(()=>{const b=w.querySelector('#mOk');if(b)b.focus();},60);
+  });
+}
+function tramoFueraDeJornada(horaInicio){
+  const largo=calcHoras(E.hInicio,E.hFin)*60;
+  return minJorn(horaInicio)>=largo;
+}
+async function agregarTramoManual(){
   const desde=document.getElementById('mtDesde').value,hasta=document.getElementById('mtHasta').value;
   const tn=parseInt(document.getElementById('mtTn').value);const motivo=document.getElementById('mtMotivo').value.trim();
   if(!desde||!hasta){toast('Completá desde y hasta','err');return;}
@@ -765,8 +792,13 @@ function agregarTramoManual(){
   const a=minJorn(desde);
   let dur=minJorn(hasta)-a;if(dur<0)dur+=1440;
   if(dur===0){toast('El "hasta" no puede ser igual al "desde"','err');return;}
-  const largoJornada=calcHoras(E.hInicio,E.hFin)*60;
-  if(a>=largoJornada&&!confirm(`El tramo ${desde} → ${hasta} arranca fuera del horario de la jornada (${E.hInicio} → ${E.hFin}).\n\nRevisá el horario de la jornada si no es lo que esperabas.\n\n¿Agregarlo igual?`))return;
+  if(a>=calcHoras(E.hInicio,E.hFin)*60){
+    const seguir=await modalConfirm({
+      titulo:'⚠️ No coincide con el horario de la jornada',
+      html:`<div class="modal-cmp"><div><span>Jornada configurada</span><span>${E.hInicio} → ${E.hFin}</span></div><div><span>Tramo que estás cargando</span><span>${desde} → ${hasta}</span></div></div>Casi siempre esto pasa por una hora mal escrita. Revisá el tramo, o corregí el <b>Inicio Industria</b> en la pestaña Plan si la molienda arrancó antes de lo previsto.`
+    });
+    if(!seguir)return;
+  }
   const b=a+dur;
   const choca=E.indLog.some(l=>{const c=minJorn(l.horaInicio),d=c+durTramoMin(l);return a<d&&b>c;});
   if(choca&&!confirm('Este tramo se superpone con otro ya registrado. ¿Agregarlo igual?'))return;
@@ -804,6 +836,7 @@ function renderIndLog(){
   }
   c.innerHTML=E.indLog.map((l,i)=>{
     const d=durTramoMin(l),abierto=(!l.horaFin||l.horaFin==='—');
+    const fuera=tramoFueraDeJornada(l.horaInicio);
     return `<div class="il-item" style="flex-wrap:wrap;gap:7px;">
       <input type="time" value="${normHora(l.horaInicio)}" onchange="editTramo(${i},'horaInicio',this.value)" class="asig-t" style="width:98px;">
       <span class="asig-lb">a</span>
@@ -811,7 +844,7 @@ function renderIndLog(){
       <input type="number" value="${l.tn}" min="0" max="150" onchange="editTramo(${i},'tn',this.value)" style="width:58px;background:var(--bg4);border:1px solid var(--v2);border-radius:6px;padding:4px 2px;color:var(--vneon);font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-align:center;outline:none;">
       <span class="asig-lb">TN/h</span>
       <span style="font-size:11px;color:var(--t2);min-width:52px;">${hsTexto(d)}</span>
-      <span class="il-mot" style="min-width:120px;">${l.motivo}${abierto?' <span style="color:var(--n3);">· en curso</span>':''}${l._reg==='diferido'?' <span style="color:var(--t3);font-size:10px;">· diferido</span>':''}</span>
+      <span class="il-mot" style="min-width:120px;">${l.motivo}${abierto?' <span style="color:var(--n3);">· en curso</span>':''}${l._reg==='diferido'?' <span style="color:var(--t3);font-size:10px;">· diferido</span>':''}${fuera?' <span style="color:var(--n3);font-size:10px;" title="Arranca fuera del horario de la jornada">· ⚠️ fuera de jornada</span>':''}</span>
       <button class="asig-del" onclick="borrarTramo(${i})" title="Borrar tramo">✕</button>
     </div>`;}).join('');
 }
@@ -945,7 +978,7 @@ function renderEstadoPlan(){
     const faltan=Math.max(0,p.camiones-disp);
     const lista=E.despachos.filter(x=>x.destino===d).sort((a,b)=>(a._ts||0)-(b._ts||0));
     const chips=lista.length
-      ? lista.map(x=>`<span class="int-chip${x.extraordinario?' extra':''}"${x.extraordinario?' title="Despacho extraordinario"':''}>${x.interno}<i>${x.hora}</i></span>`).join('')
+      ? lista.map(x=>`<span class="int-chip${x.extraordinario?' extra':''}" onclick="borrarPorId('${x._fbId||''}',${E.despachos.indexOf(x)})" title="${x.extraordinario?'Extraordinario · ':''}Tocá para borrar${x.obs?' · 💬 '+x.obs.replace(/"/g,'')+'':''}">${x.interno}<i>${x.hora}</i></span>`).join('')
       : '<span class="int-vacio">Sin despachos todavía</span>';
     return `<div class="ep-item ${cls}" style="display:block;">
       <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -955,10 +988,29 @@ function renderEstadoPlan(){
       <div class="int-fila">${chips}${faltan>0?`<span class="int-faltan">faltan ${faltan}</span>`:''}</div>
     </div>`;
   }).join('');
-  const htmlExtra=destFueraPlan.length>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--n3);padding:10px 0 4px;text-transform:uppercase;">⚠️ Fuera del plan</div>${destFueraPlan.map(d=>{const disp=despachados(d);return `<div class="ep-item" style="border-left:3px solid var(--n3);background:rgba(232,129,42,0.06);"><div><div class="ep-nombre">${d}</div><div class="ep-horario" style="color:var(--n3);">No estaba en el plan</div></div><div style="text-align:right"><div class="ep-prog" style="color:var(--n3);">${disp}/0</div><div class="ep-pct" style="color:var(--n3);">⚠️ Fuera plan</div></div></div>`;}).join('')}`:'';
+  const htmlExtra=destFueraPlan.length>0?`<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--n3);padding:10px 0 4px;text-transform:uppercase;">⚠️ Fuera del plan</div>${destFueraPlan.map(d=>{
+    const disp=despachados(d);
+    const lst=E.despachos.filter(x=>x.destino===d).sort((a,b)=>(a._ts||0)-(b._ts||0));
+    const ch=lst.map(x=>`<span class="int-chip extra" onclick="borrarPorId('${x._fbId||''}',${E.despachos.indexOf(x)})" title="Tocá para borrar${x.obs?' · 💬 '+x.obs.replace(/"/g,''):''}">${x.interno}<i>${x.hora}</i></span>`).join('');
+    return `<div class="ep-item" style="display:block;border-left:3px solid var(--n3);background:rgba(232,129,42,0.06);"><div style="display:flex;align-items:center;justify-content:space-between;"><div><div class="ep-nombre">${d}</div><div class="ep-horario" style="color:var(--n3);">No estaba en el plan</div></div><div style="text-align:right"><div class="ep-prog" style="color:var(--n3);">${disp}/0</div><div class="ep-pct" style="color:var(--n3);">⚠️ Fuera plan</div></div></div><div class="int-fila">${ch}</div></div>`;
+  }).join('')}`:'';
   c.innerHTML=htmlPlan+htmlExtra;
 }
+function toggleHist(){
+  const c=document.getElementById('histDespachos'),b=document.getElementById('btnHist');
+  const abierto=c.style.display!=='none';
+  c.style.display=abierto?'none':'block';
+  b.innerHTML=(abierto?'▸ Ver':'▾ Ocultar')+` todos los despachos (${E.despachos.length})`;
+}
+function borrarPorId(fbId,idx){
+  const i=fbId?E.despachos.findIndex(x=>x._fbId===fbId):idx;
+  if(i<0){toast('No encontré ese despacho, recargá la página','err');return;}
+  eliminarDespacho(i);
+}
 function renderHistDespachos(){
+  const b=document.getElementById('btnHist');
+  if(b){const abierto=document.getElementById('histDespachos').style.display!=='none';
+    b.innerHTML=(abierto?'▾ Ocultar':'▸ Ver')+` todos los despachos (${E.despachos.length})`;}
   const c=document.getElementById('histDespachos');
   if(E.despachos.length===0){c.innerHTML='<div class="empty"><div class="ic">🚛</div>Sin despachos aún.</div>';return;}
   c.innerHTML=E.despachos.map((d,i)=>`<div class="di" style="position:relative;"><div class="di-h"><div><div class="di-int">Interno ${d.interno}</div><div class="di-dest">${d.destino}</div></div><div style="display:flex;align-items:center;gap:10px;"><div class="di-hora">${d.hora}</div><button onclick="eliminarDespacho(${i})" style="background:var(--r2);border:none;border-radius:6px;color:#fff;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">🗑️ Borrar</button></div></div>${d.obs?`<div class="di-obs">💬 ${d.obs}</div>`:''}</div>`).reverse().join('');
