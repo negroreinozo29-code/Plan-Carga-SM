@@ -1010,7 +1010,9 @@ async function registrarDespacho(){
 async function enviar(hoja,fila,accion=null){try{const body=accion?{hoja,accion}:{hoja,fila};await fetch(SHEETS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return true;}catch(e){return false;}}
 function renderEstadoPlan(){
   const c=document.getElementById('estadoPlan'),dest=Object.keys(E.plan);
-  const destFueraPlan=E.despachos.filter(d=>d.extraordinario).map(d=>d.destino).filter((v,i,a)=>a.indexOf(v)===i);
+  // Solo destinos que NO estaban en el plan. Si el destino sí estaba, el extraordinario
+  // ya se ve arriba en naranja dentro de su propia fila — mostrarlo dos veces confunde.
+  const destFueraPlan=E.despachos.filter(d=>d.extraordinario&&!E.plan[d.destino]).map(d=>d.destino).filter((v,i,a)=>a.indexOf(v)===i);
   if(dest.length===0&&destFueraPlan.length===0){c.innerHTML='<div class="empty"><div class="ic">📋</div>Confirmá el plan primero.</div>';return;}
   const htmlPlan=dest.map(d=>{
     const p=E.plan[d],disp=despachados(d);
