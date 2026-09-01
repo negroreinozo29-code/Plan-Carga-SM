@@ -498,7 +498,7 @@ function cambiarFecha(val){
   E.plan={};E.despachos=[];E.novedades=[];E.indLog=[];E.indCierre=null;E.planConfirmado=false;
   E.camionesDisponibles=0;E.camEdit=null;
   const _ci=document.getElementById('camionesDisp');if(_ci)_ci.value='';
-  save();actualizarJornadaDisplay();ocultarFecha();renderPlanRows();renderPanelCamiones();
+  save();actualizarJornadaDisplay();ocultarFecha();renderPlanRows();renderPanelCamiones();renderBotonCerrar();
   toast(`Jornada: ${E.fecha} — cargando datos...`);
   escucharDespachosFB();setTimeout(cargarPlanFB,1500);
 }
@@ -556,8 +556,7 @@ function cerrarJornada(){
   E.indLog.forEach(l=>{if(l.horaFin==='—')l.horaFin=hora;});
   E.indCierre=hora;
   save();renderIndLog();renderCierre();renderAvisoJornada();
-  document.getElementById('btnCerrar').textContent='✅ Jornada cerrada a las '+hora;
-  document.getElementById('btnCerrar').disabled=true;
+  renderBotonCerrar();
   toast('Jornada cerrada a las '+hora);
   guardarPlanFB();
   // SIN merge:true — reemplaza el documento completo. Con merge, los campos de un
@@ -712,7 +711,13 @@ function calcular(){
   if(E.tieneCorte){const res=document.getElementById('corteResumen');if(res)res.textContent=`Corte de ${hsCorte}hs descontado → ${hsTotales}hs totales − ${hsCorte}hs corte = ${hs}hs operativas`;}
   actualizarResumen();save();
 }
+function renderBotonCerrar(){
+  const b=document.getElementById('btnCerrar');if(!b)return;
+  if(E.indCierre){b.textContent='✅ Jornada cerrada a las '+E.indCierre;b.disabled=true;}
+  else{b.textContent='🔒 Cerrar jornada';b.disabled=false;}
+}
 function renderPanelCamiones(){
+  renderBotonCerrar();
   const inp=document.getElementById('camionesDisp'),btn=document.getElementById('btnCorregirCam');
   const marca=document.getElementById('camEditado'),ayuda=document.getElementById('camAyuda');
   if(!inp)return;
@@ -905,7 +910,7 @@ function limpiarPlan(){
   const _ci=document.getElementById('camionesDisp');if(_ci)_ci.value='';
   renderPlanRows();
   renderEstadoPlan();renderHistDespachos();renderNovedades();renderCierre();
-  const btn=document.getElementById('btnCerrar');if(btn){btn.textContent='🔒 Cerrar jornada';btn.disabled=false;}
+  renderBotonCerrar();
   save();toast('Jornada reiniciada');
 }
 function poblarSelectores(){
