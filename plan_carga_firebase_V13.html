@@ -402,12 +402,30 @@ const firebaseConfig={apiKey:"AIzaSyBWiU4I1tYW9tr4cELLzWL90UdmKim06kk",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 function fechaKey(){const p=E.fecha.split('/');return `${p[0].padStart(2,'0')}-${p[1]}-${p[2]}`;}
+// Jornadas viejas (días 1 al 9) quedaron guardadas sin el cero adelante: "6-7-2026".
+function fechaKeyAlt(){const p=E.fecha.split('/');return `${parseInt(p[0])}-${p[1]}-${p[2]}`;}
 function fechaConCero(){const p=E.fecha.split('/');return `${p[0].padStart(2,'0')}/${p[1]}/${p[2]}`;}
+function fechaSinCero(){const p=E.fecha.split('/');return `${parseInt(p[0])}/${p[1]}/${p[2]}`;}
+// Si la jornada se encontró con la clave vieja, se sigue escribiendo en esa misma
+// para no dejar el documento original huérfano ni duplicar la jornada.
+let _claveDoc=null;
+function claveActiva(){return _claveDoc||fechaKey();}
+async function resolverClave(){
+  _claveDoc=null;
+  const k=fechaKey(),alt=fechaKeyAlt();
+  if(k===alt){_claveDoc=k;return k;}
+  try{
+    if((await db.collection('planes').doc(k).get()).exists){_claveDoc=k;return k;}
+    if((await db.collection('planes').doc(alt).get()).exists){_claveDoc=alt;return alt;}
+    if((await db.collection('cierres').doc(alt).get()).exists){_claveDoc=alt;return alt;}
+  }catch(e){console.log('Error resolviendo clave:',e);}
+  _claveDoc=k;return k;
+}
 let _unsubscribeDespachos=null;
 function escucharDespachosFB(){
   if(_unsubscribeDespachos){_unsubscribeDespachos();_unsubscribeDespachos=null;}
-  const _fechaBuscar=fechaConCero();
-  _unsubscribeDespachos=db.collection('despachos').where('fecha','==',_fechaBuscar).onSnapshot(snapshot=>{
+  const _formatos=[...new Set([fechaConCero(),fechaSinCero()])];
+  _unsubscribeDespachos=db.collection('despachos').where('fecha','in',_formatos).onSnapshot(snapshot=>{
     const lista=[];
     snapshot.forEach(doc=>{lista.push({...doc.data(),_fbId:doc.id});});
     lista.sort((a,b)=>(a._ts||0)-(b._ts||0));
@@ -417,13 +435,14 @@ function escucharDespachosFB(){
 async function guardarPlanFB(){
   try{
     // SIN merge:true — reemplaza el documento completo para evitar mezcla de datos de otras fechas
-    await db.collection('planes').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,planConfirmado:true,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre??null,camionesDisponibles:E.camionesDisponibles||0,camEdit:E.camEdit??null,actualizado:Date.now()});
+    await db.collection('planes').doc(claveActiva()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,planConfirmado:true,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre??null,camionesDisponibles:E.camionesDisponibles||0,camEdit:E.camEdit??null,actualizado:Date.now()});
     return true;
   }catch(e){console.log('Error guardando plan:',e);return false;}
 }
 async function cargarPlanFB(){
   try{
-    const doc=await db.collection('planes').doc(fechaKey()).get();
+    const clave=await resolverClave();
+    let doc=await db.collection('planes').doc(clave).get();
     if(!doc.exists) return;
     const data=doc.data();
     const planVacioLocal=!E.plan||Object.keys(E.plan).length===0;
@@ -496,7 +515,7 @@ function cambiarFecha(val){
   const[y,m,d]=val.split('-');
   E.fecha=`${d.padStart(2,'0')}/${parseInt(m)}/${y}`;
   E.plan={};E.despachos=[];E.novedades=[];E.indLog=[];E.indCierre=null;E.planConfirmado=false;
-  E.camionesDisponibles=0;E.camEdit=null;
+  E.camionesDisponibles=0;E.camEdit=null;_claveDoc=null;
   const _ci=document.getElementById('camionesDisp');if(_ci)_ci.value='';
   save();actualizarJornadaDisplay();ocultarFecha();renderPlanRows();renderPanelCamiones();renderBotonCerrar();
   toast(`Jornada: ${E.fecha} — cargando datos...`);
@@ -561,7 +580,7 @@ function cerrarJornada(){
   guardarPlanFB();
   // SIN merge:true — reemplaza el documento completo. Con merge, los campos de un
   // cierre anterior quedaban pegados y el respaldo mezclaba dos versiones del plan.
-  db.collection('cierres').doc(fechaKey()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,despachos:E.despachos,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre,cerrado:Date.now(),camionesDisponibles:E.camionesDisponibles||0,camEdit:E.camEdit??null}).then(()=>{toast('💾 Respaldo permanente del cierre guardado');}).catch(()=>{});
+  db.collection('cierres').doc(claveActiva()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,despachos:E.despachos,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre,cerrado:Date.now(),camionesDisponibles:E.camionesDisponibles||0,camEdit:E.camEdit??null}).then(()=>{toast('💾 Respaldo permanente del cierre guardado');}).catch(()=>{});
 }
 function init(){
   actualizarJornadaDisplay();
@@ -748,7 +767,7 @@ async function corregirCamiones(){
   E.camionesDisponibles=nuevo;
   save();renderPanelCamiones();renderCierre();
   try{
-    await db.collection('cierres').doc(fechaKey()).set({camionesDisponibles:nuevo,camEdit:E.camEdit},{merge:true});
+    await db.collection('cierres').doc(claveActiva()).set({camionesDisponibles:nuevo,camEdit:E.camEdit},{merge:true});
     await guardarPlanFB();
     toast(`✓ Corregido: ${actual} → ${nuevo} camiones`);
   }catch(e){toast('Se guardó local, pero falló el envío a Firebase','warn');}
@@ -1075,10 +1094,10 @@ function registrarNovedad(){
   E.novedades.push({tipo,destino,desc,hora:horaAhora(),resuelta:false});save();
   document.getElementById('novTipo').value='';document.getElementById('novDestino').value='';document.getElementById('novDesc').value='';
   renderNovedades();renderCierre();
-  db.collection('planes').doc(fechaKey()).set({novedades:E.novedades},{merge:true}).catch(e=>console.log('Error guardando novedad:',e));
+  db.collection('planes').doc(claveActiva()).set({novedades:E.novedades},{merge:true}).catch(e=>console.log('Error guardando novedad:',e));
   toast('⚠️ Novedad registrada');
 }
-function resolverNovedad(i){E.novedades[i].resuelta=true;save();renderNovedades();renderCierre();db.collection('planes').doc(fechaKey()).set({novedades:E.novedades},{merge:true}).catch(e=>console.log('Error:',e));toast('Novedad resuelta');}
+function resolverNovedad(i){E.novedades[i].resuelta=true;save();renderNovedades();renderCierre();db.collection('planes').doc(claveActiva()).set({novedades:E.novedades},{merge:true}).catch(e=>console.log('Error:',e));toast('Novedad resuelta');}
 function renderNovedades(){
   const c=document.getElementById('listNovedades');const activas=E.novedades.filter(n=>!n.resuelta);
   if(activas.length===0){c.innerHTML='<div class="empty"><div class="ic">✅</div>Sin novedades activas.</div>';return;}
