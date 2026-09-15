@@ -435,7 +435,7 @@ function escucharDespachosFB(){
 async function guardarPlanFB(){
   try{
     // SIN merge:true — reemplaza el documento completo para evitar mezcla de datos de otras fechas
-    await db.collection('planes').doc(claveActiva()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',plan:E.plan,planConfirmado:true,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre??null,camionesDisponibles:E.camionesDisponibles||0,camEdit:E.camEdit??null,actualizado:Date.now()});
+    await db.collection('planes').doc(claveActiva()).set({fecha:E.fecha,tn:E.tn,hInicio:E.hInicio,hFin:E.hFin,tieneCorte:E.tieneCorte||false,hCorteInicio:E.hCorteInicio||'11:00',hCorteFin:E.hCorteFin||'17:00',sinMolienda:E.sinMolienda||false,camSinMolienda:E.camSinMolienda||0,plan:E.plan,planConfirmado:true,novedades:E.novedades,indLog:E.indLog,indCierre:E.indCierre??null,camionesDisponibles:E.camionesDisponibles||0,camEdit:E.camEdit??null,actualizado:Date.now()});
     return true;
   }catch(e){console.log('Error guardando plan:',e);return false;}
 }
@@ -449,7 +449,7 @@ async function cargarPlanFB(){
     const planFB=data.plan&&Object.keys(data.plan).length>0;
     if(planVacioLocal&&planFB){
       E.tn=data.tn??E.tn;E.hInicio=data.hInicio??E.hInicio;E.hFin=data.hFin??E.hFin;
-      E.tieneCorte=data.tieneCorte??false;E.hCorteInicio=data.hCorteInicio??'11:00';E.hCorteFin=data.hCorteFin??'17:00';
+      E.tieneCorte=data.tieneCorte??false;E.sinMolienda=data.sinMolienda??false;E.camSinMolienda=data.camSinMolienda??0;E.hCorteInicio=data.hCorteInicio??'11:00';E.hCorteFin=data.hCorteFin??'17:00';
       E.plan=data.plan;E.planConfirmado=data.planConfirmado??true;
       E.novedades=data.novedades??E.novedades;E.indLog=data.indLog??E.indLog;E.indCierre=data.indCierre??E.indCierre;
       E.camionesDisponibles=data.camionesDisponibles??E.camionesDisponibles;E.camEdit=data.camEdit??null;
@@ -501,7 +501,7 @@ function normalizarIndLog(){
   return cambio;
 }
 function slug(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
-function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',tieneCorte:false,hCorteInicio:'11:00',hCorteFin:'17:00',sinMolienda:false,camPrevios:0,plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[],camionesDisponibles:0,camEdit:null};}
+function estadoBase(){return{fecha:hoy(),tn:87,hInicio:'10:00',hFin:'06:00',tieneCorte:false,hCorteInicio:'11:00',hCorteFin:'17:00',sinMolienda:false,camSinMolienda:0,camPrevios:0,plan:{},planConfirmado:false,despachos:[],novedades:[],indLog:[],camionesDisponibles:0,camEdit:null};}
 let E=(()=>{try{const raw=localStorage.getItem('sm_plan_v3');if(!raw)return estadoBase();const e=JSON.parse(raw);if(e.fecha!==hoy())return estadoBase();return e;}catch(x){return estadoBase();}})();
 function save(){localStorage.setItem('sm_plan_v3',JSON.stringify(E));}
 function editarFecha(){
@@ -587,7 +587,8 @@ function init(){
   document.getElementById('tnInput').value=E.tn;document.getElementById('hInicio').value=E.hInicio;document.getElementById('hFin').value=E.hFin;
   if(E.camPrevios>0){const cp=document.getElementById('camPrevios');if(cp)cp.value=E.camPrevios;}
   if(E.tieneCorte){document.getElementById('tieneCorte').checked=true;document.getElementById('cortePanel').style.display='block';document.getElementById('hCorteInicio').value=E.hCorteInicio||'11:00';document.getElementById('hCorteFin').value=E.hCorteFin||'17:00';}
-  if(E.sinMolienda){document.getElementById('sinMolienda').checked=true;document.getElementById('panelIndustria').style.display='none';document.getElementById('panelSinMolienda').style.display='block';}
+  if(E.sinMolienda){document.getElementById('sinMolienda').checked=true;document.getElementById('panelIndustria').style.display='none';document.getElementById('panelSinMolienda').style.display='block';
+    if(E.camSinMolienda>0){const cs=document.getElementById('camSinMolienda');if(cs)cs.value=E.camSinMolienda;}}
   normalizarIndLog();
   renderPlanRows();calcular();poblarSelectores();renderEstadoPlan();renderHistDespachos();renderNovedades();renderCierre();
   escucharDespachosFB();setTimeout(cargarPlanFB,2000);
@@ -716,7 +717,7 @@ function calcular(){
   const ini=document.getElementById('hInicio').value,fin=document.getElementById('hFin').value;
   const ci=document.getElementById('hCorteInicio')?.value||'11:00',cf=document.getElementById('hCorteFin')?.value||'17:00';
   E.hInicio=ini;E.hFin=fin;E.hCorteInicio=ci;E.hCorteFin=cf;
-  if(E.sinMolienda){const cam=parseInt(document.getElementById('camSinMolienda')?.value)||0;document.getElementById('tnActual').textContent='—';document.getElementById('hsDisp').textContent='—';document.getElementById('camDisp').textContent=cam||'—';document.getElementById('rDisponibles').textContent=cam||'—';actualizarResumen();save();return;}
+  if(E.sinMolienda){const cam=parseInt(document.getElementById('camSinMolienda')?.value)||0;E.camSinMolienda=cam;document.getElementById('tnActual').textContent='—';document.getElementById('hsDisp').textContent='—';document.getElementById('camDisp').textContent=cam||'—';document.getElementById('rDisponibles').textContent=cam||'—';actualizarResumen();save();return;}
   const tnRaw=parseInt(document.getElementById('tnInput').value);
   const tn=isNaN(tnRaw)?87:tnRaw;
   E.tn=tn;
@@ -1124,12 +1125,18 @@ function renderCierre(){
 }
 function generarPDFPlan(){
   const dest=Object.keys(E.plan);if(dest.length===0){toast('No hay plan para exportar','err');return;}
-  const hs=calcHorasConCorte();const camMolienda=Math.floor(hs*E.tn/TN_CAM);const cam=camMolienda+(E.camPrevios||0);const total=Object.values(E.plan).reduce((a,v)=>a+v.camiones,0);
+  const sinMol=!!E.sinMolienda;
+  const hs=calcHorasConCorte();
+  const camMolienda=sinMol?0:Math.floor(hs*E.tn/TN_CAM);
+  const cam=sinMol?(parseInt(document.getElementById('camSinMolienda')?.value)||E.camSinMolienda||0):camMolienda+(E.camPrevios||0);
+  const total=Object.values(E.plan).reduce((a,v)=>a+v.camiones,0);
   const corteInfo=E.tieneCorte?` (c/corte de ${calcHoras(E.hCorteInicio,E.hCorteFin)}hs)`:'';
   const filas=dest.map(d=>{const p=E.plan[d];return `<tr><td>${d}</td><td style="text-align:center;font-weight:700;font-size:16px;color:#2d7a2d">${p.camiones}</td><td style="text-align:center">${p.desde||'—'}</td><td style="text-align:center">${p.hasta||'—'}</td></tr>`;}).join('');
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:30px;color:#1a1a1a;max-width:800px;margin:0 auto;}.hdr{background:#1a4a1a;color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}.hdr h1{font-size:26px;letter-spacing:3px;margin:0;}.hdr .sub{font-size:11px;opacity:.7;letter-spacing:1px;margin-top:4px;}.hdr .fecha{text-align:right;font-size:13px;opacity:.8;}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}.stat{background:#f5f5f5;border-radius:8px;padding:12px;text-align:center;border:1px solid #e0e0e0;}.stat .num{font-size:28px;font-weight:800;color:#e8812a;}.stat .lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}table{width:100%;border-collapse:collapse;}th{background:#1a4a1a;color:#fff;padding:10px 12px;text-align:left;font-size:12px;letter-spacing:1px;text-transform:uppercase;}td{padding:9px 12px;border-bottom:1px solid #eee;font-size:13px;}tr:nth-child(even)td{background:#fafafa;}.footer{margin-top:24px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;}</style></head><body>
-  <div class="hdr"><div><h1>PLAN DE CARGA</h1><div class="sub">SAN MIGUEL CITRUS — TRANSPORTE INTERNO</div></div><div class="fecha">Jornada: ${E.fecha}<br>Industria: ${E.tn} TN/hora<br>${E.hInicio} → 06:00 (${hs}hs${corteInfo})</div></div>
-  ${(E.camPrevios>0)?`<div style="background:#fff8f0;border:1px solid #e8812a;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;"><strong>Camiones disponibles: ${cam}</strong> = ${camMolienda} de molienda (${hs}hs × ${E.tn}TN/h) + ${E.camPrevios} previos sin molienda</div>`:''}
+  <div class="hdr"><div><h1>PLAN DE CARGA</h1><div class="sub">SAN MIGUEL CITRUS — TRANSPORTE INTERNO</div></div><div class="fecha">Jornada: ${E.fecha}<br>${sinMol?'Sin molienda':'Industria: '+E.tn+' TN/hora'}<br>${E.hInicio} → 06:00 (${hs}hs${corteInfo})</div></div>
+  ${sinMol
+    ? `<div style="background:#fff8f0;border:1px solid #e8812a;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;"><strong>${cam} camiones disponibles</strong> — jornada sin molienda</div>`
+    : ((E.camPrevios>0)?`<div style="background:#fff8f0;border:1px solid #e8812a;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;"><strong>Camiones disponibles: ${cam}</strong> = ${camMolienda} de molienda (${hs}hs × ${E.tn}TN/h) + ${E.camPrevios} previos sin molienda</div>`:'')}
   <div class="stats"><div class="stat"><div class="num">${cam}</div><div class="lbl">Camiones disponibles</div></div><div class="stat"><div class="num">${total}</div><div class="lbl">Camiones asignados</div></div><div class="stat"><div class="num">${dest.length}</div><div class="lbl">Destinos activos</div></div><div class="stat"><div class="num">${Math.max(0,cam-total)}</div><div class="lbl">Sin asignar</div></div></div>
   <table><thead><tr><th>Destino</th><th>Camiones</th><th>Desde</th><th>Hasta</th></tr></thead><tbody>${filas}</tbody></table>
   <div class="footer">Generado el ${new Date().toLocaleString('es-AR')} — San Miguel Citrus</div></body></html>`;
